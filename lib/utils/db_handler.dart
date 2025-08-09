@@ -34,18 +34,18 @@ Future<List<Map<String, dynamic>>> getAvailableBooks(Bible bible) {
   );
 }
 
-Future<List<Map<String, dynamic>>> getVerseSearch(
-  Bible bible,
-  String search,
-) async {
-  List<String> searchPieces = search.trim().replaceAll("  ", " ").split(" ");
-  String whereClause = buildWhereClause("text", searchPieces);
-  return await database!.query(
-    bible.verses,
-    where: whereClause,
-    whereArgs: searchPieces.map((p) => '%$p%').toList(),
-  );
-}
+// Future<List<Map<String, dynamic>>> getVerseSearch(
+//   Bible bible,
+//   String search,
+// ) async {
+//   List<String> searchPieces = search.trim().replaceAll("  ", " ").split(" ");
+//   String whereClause = buildWhereClause("text", searchPieces);
+//   return await database!.query(
+//     bible.verses,
+//     where: whereClause,
+//     whereArgs: searchPieces.map((p) => '%$p%').toList(),
+//   );
+// }
 
 String buildWhereClause(String column, List<String> patterns) {
   if (patterns.isEmpty) return '';

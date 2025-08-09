@@ -135,8 +135,34 @@ class BibleProvider extends ChangeNotifier {
     _saveSettings();
   }
 
-  Future<List<Map<String, dynamic>>> searchVerse(String search) async {
-    return await getVerseSearch(currentBible!, search);
+  List<Map<String, dynamic>> searchVerse(String search) {
+    // return await getVerseSearch(currentBible!, search);
+    List<String> tokens = search
+        .trim()
+        .toLowerCase()
+        .replaceAll("  ", " ")
+        .split(" ");
+    var bookIds = <int>{};
+    for (var b in books) {
+      for (var t in tokens) {
+        if (b['name'].toString().toLowerCase().contains(t)) {
+          bookIds.add(b['id'] as int);
+          break;
+        }
+      }
+    }
+
+    return _verses.where((v) {
+      bool isBook = bookIds.contains(v['book_id']);
+      bool isText = true;
+      for (final t in tokens) {
+        if (!v['text'].toString().toLowerCase().contains(t)) {
+          isText = false;
+          break;
+        }
+      }
+      return isText || isBook;
+    }).toList();
   }
 
   void deleteBible(Bible bible) {

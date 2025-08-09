@@ -173,7 +173,9 @@ class _HomeState extends State<Home> {
                             _searchQuery!.trim().isEmpty) {
                           return [];
                         }
-                        var results = await provider.searchVerse(_searchQuery!);
+                        var results = /* await */ provider.searchVerse(
+                          _searchQuery!,
+                        );
                         if (results.isEmpty) {
                           return [];
                         }
