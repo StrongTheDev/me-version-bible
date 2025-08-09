@@ -5,6 +5,7 @@ import 'package:me_version_bible/pages/Home.dart';
 import 'package:me_version_bible/pages/manage_versions.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:me_version_bible/providers/versions_provider.dart';
+import 'package:me_version_bible/utils/constants.dart' show appColors;
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -41,7 +42,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       home: Home(),
       theme: ThemeData(
-        colorSchemeSeed: provider.colors[provider.setting.themeColorIndex],
+        colorSchemeSeed: appColors[provider.setting.themeColorIndex],
         brightness: provider.setting.lightTheme
             ? Brightness.light
             : Brightness.dark,

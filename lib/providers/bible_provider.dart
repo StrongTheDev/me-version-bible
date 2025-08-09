@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:me_version_bible/models/bible.dart';
 import 'package:me_version_bible/models/selection.dart';
 import 'package:me_version_bible/models/setting.dart';
+import 'package:me_version_bible/utils/constants.dart' show githubRepo;
 import 'package:me_version_bible/utils/db_handler.dart';
 import 'package:me_version_bible/utils/download.dart';
 import 'package:path/path.dart' show join;
@@ -58,17 +59,6 @@ class BibleProvider extends ChangeNotifier {
     return _versesCache;
   }
 
-  final colors = [
-    Colors.brown,
-    Colors.red,
-    Colors.deepOrange,
-    Colors.yellow,
-    Colors.green,
-    Colors.blue,
-    Colors.indigo,
-    Colors.purple,
-  ];
-
   BibleProvider() {
     initFiles();
   }
@@ -97,7 +87,7 @@ class BibleProvider extends ChangeNotifier {
       downloadingMessage = "Downloading your first Bible...";
       notifyListeners();
       await downloadBibleString(
-        "https://raw.githubusercontent.com/scrollmapper/bible_databases/master/formats/sqlite/KJV.db",
+        "https://raw.githubusercontent.com/$githubRepo/master/formats/sqlite/KJV.db",
       );
       _bibles.add(Bible.fromPath(join(_biblesDirectoryPath, "KJV.db")));
       _setting.lastBiblePath = _bibles.first.path;

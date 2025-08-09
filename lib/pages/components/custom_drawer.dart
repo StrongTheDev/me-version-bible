@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:me_version_bible/pages/components/about_content.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
+import 'package:me_version_bible/utils/constants.dart' show appColors;
 import 'package:provider/provider.dart';
 
 class CustomDrawer extends StatelessWidget {
@@ -52,10 +53,10 @@ class CustomDrawer extends StatelessWidget {
                   focusColor: Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
                   underline: SizedBox(),
-                  items: provider.colors
+                  items: appColors
                       .map(
                         (color) => DropdownMenuItem(
-                          value: provider.colors.indexOf(color),
+                          value: appColors.indexOf(color),
                           child: Container(
                             width: 32,
                             height: 32,

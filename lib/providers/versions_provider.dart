@@ -5,18 +5,16 @@ import 'package:http/http.dart' as http;
 import 'package:me_version_bible/models/bible.dart';
 import 'package:me_version_bible/models/bible_downloadable.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
+import 'package:me_version_bible/utils/constants.dart';
 import 'package:me_version_bible/utils/db_handler.dart';
 import 'package:me_version_bible/utils/download.dart';
 import 'package:path/path.dart';
-
-final api = "https://api.github.com/repos";
-final repo = "scrollmapper/bible_databases";
 
 class BibleVersionsProvider extends ChangeNotifier {
   final BibleProvider _bibleProvider;
   List<BibleDownloadable>? _downloads;
   bool reloading = false;
-  final url = "$api/$repo/contents/formats/sqlite";
+  final url = "$githubAPI/$githubRepo/contents/formats/sqlite";
 
   bool sorted = false;
   bool hideDownloaded = true;
