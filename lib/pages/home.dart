@@ -58,12 +58,12 @@ class _HomeState extends State<Home> {
       );
       _scrollChapter.animateTo(
         selection.chapterIndex * 48,
-        duration: Durations.medium2,
+        duration: Durations.long1,
         curve: Curves.easeInOut,
       );
       _scrollBook.animateTo(
         selection.bookIndex * 48,
-        duration: Durations.medium2,
+        duration: Durations.long1,
         curve: Curves.easeInOut,
       );
       if (!mounted) return;
@@ -316,6 +316,16 @@ class _HomeState extends State<Home> {
                           if (!snap.hasData || snap.data!) {
                             return Center(child: CircularProgressIndicator());
                           }
+                          if (!_initialScrollCompleted) {
+                            // The initial scroll should happen only once, after the UI for the
+                            // lists has been built. Scheduling it in a post-frame callback
+                            // from here ensures that all lists (Books, Chapters, and Verses)
+                            // are available and their scroll controllers have clients.
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              // Check if mounted to avoid errors if the widget is disposed.
+                              if (mounted) _initialScroll();
+                            });
+                          }
 
                           return ListView.builder(
                             controller: _scrollVerse,
@@ -348,7 +358,10 @@ class _HomeState extends State<Home> {
                                 );
                               } else {
                                 return ListTile(
-                                  leading: Text("[${verse['verse']}]"),
+                                  leading: Text(
+                                    "[${verse['verse']}]",
+                                    style: TextStyle(color: scheme.primary),
+                                  ),
                                   title: Text(verse['text']),
                                 );
                               }
@@ -366,6 +379,30 @@ class _HomeState extends State<Home> {
         );
       },
     );
+  }
+
+  bool _initialScrollCompleted = false;
+  void _initialScroll() {
+    // If we've already scrolled, or if the controllers aren't ready, do nothing.
+    // This check is crucial because this method is called in a post-frame callback
+    // which might run on subsequent rebuilds.
+    if (_initialScrollCompleted ||
+        !_scrollBook.hasClients ||
+        !_scrollChapter.hasClients) {
+      return;
+    }
+
+    final provider = Provider.of<BibleProvider>(context, listen: false);
+    final selection = provider.setting.selection;
+
+    const double bookAndChapterItemHeight = 48.0;
+
+    // Using jumpTo for an instantaneous scroll on load is often better
+    // than an animation.
+    _scrollBook.jumpTo(selection.bookIndex * bookAndChapterItemHeight);
+    _scrollChapter.jumpTo(selection.chapterIndex * bookAndChapterItemHeight);
+
+    _initialScrollCompleted = true;
   }
 }
 
@@ -451,7 +488,10 @@ class _FlashingListTileState extends State<_FlashingListTile>
       builder: (context, child) {
         return ListTile(
           tileColor: _colorAnimation.value,
-          leading: Text("[${widget.verse['verse']}]"),
+          leading: Text(
+            "[${widget.verse['verse']}]",
+            style: TextStyle(color: Theme.of(context).colorScheme.primary),
+          ),
           title: Text(widget.verse['text']),
         );
       },
