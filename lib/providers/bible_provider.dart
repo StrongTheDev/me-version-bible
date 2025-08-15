@@ -126,24 +126,41 @@ class BibleProvider extends ChangeNotifier {
   }
 
   List<Map<String, dynamic>> searchVerse(String search) {
+    RegExp bookRegex = RegExp(r'<([^>]*)>');
+    // get books
+    var matches = bookRegex.allMatches(search);
+    List<String> stringMatch = [];
+    for (var m in matches) {
+      stringMatch.add(m[1]!);
+    }
+    List<String> bookMatches = [];
+    for (var match in stringMatch) {
+      var books = match.trim().split(",").map((b) => b.trim().toLowerCase());
+      bookMatches.addAll(books);
+    }
+    // clean search string
+    search = search.replaceAll(bookRegex, "");
+    search = search.trim().replaceAll(RegExp(r'\s\s+'), " ").toLowerCase();
+
     // return await getVerseSearch(currentBible!, search);
-    List<String> tokens = search
-        .trim()
-        .toLowerCase()
-        .replaceAll("  ", " ")
-        .split(" ");
+    List<String> tokens = search.split(" ");
     var bookIds = <int>{};
-    for (var b in books) {
-      for (var t in tokens) {
-        if (b['name'].toString().toLowerCase().contains(t)) {
-          bookIds.add(b['id'] as int);
-          break;
+    if (bookMatches.isNotEmpty) {
+      for (var b in books) {
+        for (var bm in bookMatches) {
+          if (b['name'].toString().toLowerCase().contains(bm)) {
+            bookIds.add(b['id'] as int);
+            break;
+          }
         }
       }
     }
 
-    return _verses.where((v) {
-      bool isBook = bookIds.contains(v['book_id']);
+    var filteredVerses = _verses.where(
+      (v) => bookIds.isNotEmpty ? bookIds.contains(v['book_id']) : true,
+    );
+
+    return filteredVerses.where((v) {
       bool isText = true;
       for (final t in tokens) {
         if (!v['text'].toString().toLowerCase().contains(t)) {
@@ -151,7 +168,7 @@ class BibleProvider extends ChangeNotifier {
           break;
         }
       }
-      return isText || isBook;
+      return isText;
     }).toList();
   }
 

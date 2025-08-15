@@ -23,6 +23,7 @@ class _HomeState extends State<Home> {
 
   Iterable<Widget> _lastResults = <Widget>[];
   String? _searchQuery;
+  int _queryLength = 1; // using this to check if one is typing or not
 
   // State for verse animation
   int? _verseToAnimate;
@@ -106,7 +107,7 @@ class _HomeState extends State<Home> {
         }
         return Scaffold(
           appBar: AppBar(
-            toolbarHeight: 64,
+            toolbarHeight: 72,
             actions: [
               IconButton(
                 onPressed: () {
@@ -166,6 +167,7 @@ class _HomeState extends State<Home> {
                     child: SearchAnchor.bar(
                       searchController: _searchController,
                       barHintText: "Search for verses...",
+                      viewHintText: "Use <book1,...,bookn> to filter books",
                       barElevation: WidgetStatePropertyAll(0),
                       suggestionsBuilder: (context, controller) async {
                         _searchQuery = controller.text;
@@ -173,6 +175,16 @@ class _HomeState extends State<Home> {
                             _searchQuery!.trim().isEmpty) {
                           return [];
                         }
+                        var length = _searchQuery!.length;
+                        if (length >= _queryLength &&
+                            _searchQuery!.endsWith("<")) {
+                          _searchController.text = "$_searchQuery>";
+                          _searchController.selection = TextSelection(
+                            baseOffset: length,
+                            extentOffset: length,
+                          );
+                        }
+                        _queryLength = length;
                         var results = /* await */ provider.searchVerse(
                           _searchQuery!,
                         );
