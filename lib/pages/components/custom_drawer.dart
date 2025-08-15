@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:me_version_bible/pages/components/about_content.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:me_version_bible/utils/constants.dart' show appColors;
+import 'package:me_version_bible/utils/functions.dart' show appAboutDialog;
 import 'package:provider/provider.dart';
 
 class CustomDrawer extends StatelessWidget {
@@ -80,14 +80,7 @@ class CustomDrawer extends StatelessWidget {
                 title: Text("About"),
                 onTap: () {
                   var t = provider.currentBible!.translation!;
-                  var theme = Theme.of(context);
-                  showAboutDialog(
-                    context: context,
-                    applicationName: "Me Version Bible",
-                    applicationVersion: "1.0",
-                    applicationIcon: Image.asset("assets/icon.png", width: 64),
-                    children: [AboutContent(theme: theme, translation: t)],
-                  );
+                  appAboutDialog(context, t);
                 },
               ),
             ],

@@ -4,6 +4,7 @@ import 'package:me_version_bible/pages/components/about_content.dart';
 import 'package:me_version_bible/pages/components/custom_drawer.dart';
 import 'package:me_version_bible/pages/components/custom_list_tile.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
+import 'package:me_version_bible/utils/functions.dart';
 import 'package:provider/provider.dart';
 
 class Home extends StatefulWidget {
@@ -108,21 +109,11 @@ class _HomeState extends State<Home> {
         return Scaffold(
           appBar: AppBar(
             toolbarHeight: 72,
+            elevation: 0,
             actions: [
               IconButton(
                 onPressed: () {
-                  showAboutDialog(
-                    context: context,
-                    applicationName: "Me Version Bible",
-                    applicationVersion: "1.0",
-                    applicationIcon: Image.asset("assets/icon.png", width: 64),
-                    children: [
-                      AboutContent(
-                        theme: Theme.of(context),
-                        translation: provider.currentBible!.translation!,
-                      ),
-                    ],
-                  );
+                  appAboutDialog(context, provider.currentBible!.translation!);
                 },
                 icon: Icon(Icons.info),
               ),
