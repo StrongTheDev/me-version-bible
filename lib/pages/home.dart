@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:me_version_bible/models/selection.dart';
-import 'package:me_version_bible/pages/components/about_content.dart';
 import 'package:me_version_bible/pages/components/custom_drawer.dart';
 import 'package:me_version_bible/pages/components/custom_list_tile.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
@@ -110,6 +109,8 @@ class _HomeState extends State<Home> {
           appBar: AppBar(
             toolbarHeight: 72,
             elevation: 0,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: Colors.transparent,
             actions: [
               IconButton(
                 onPressed: () {
