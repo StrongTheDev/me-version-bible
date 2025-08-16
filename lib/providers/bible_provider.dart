@@ -156,20 +156,38 @@ class BibleProvider extends ChangeNotifier {
       }
     }
 
-    var filteredVerses = _verses.where(
+    var filteredVerses1 = _verses.where(
       (v) => bookIds.isNotEmpty ? bookIds.contains(v['book_id']) : true,
     );
 
-    return filteredVerses.where((v) {
+    Map<int, int> weights = {};
+
+    var filteredVerses2 = filteredVerses1.where((v) {
       bool isText = true;
+      int weight = 0;
+      if (v['text'].toString().contains(search)) {
+        weight += 2;
+      }
       for (final t in tokens) {
         if (!v['text'].toString().toLowerCase().contains(t)) {
           isText = false;
-          break;
+        } else {
+          weight++;
         }
       }
+      weights[v['id']] = weight;
       return isText;
     }).toList();
+    
+    filteredVerses2.sort((a, b) {
+      int w1 = weights[a['id']]!;
+      int w2 = weights[b['id']]!;
+      if (w1 > w2) return -1;
+      if (w1 == w2) return 0;
+      return 1;
+    });
+
+    return filteredVerses2;
   }
 
   void deleteBible(Bible bible) {
