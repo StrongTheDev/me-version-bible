@@ -203,17 +203,7 @@ class _HomeState extends State<Home> {
                               );
                               _searchController.closeView(_searchQuery);
                             },
-                            child: ListTile(
-                              leading: Column(
-                                children: [
-                                  Text(
-                                    "${provider.books.firstWhere((b) => b['id'] == verse['book_id'])['name']}",
-                                  ),
-                                  Text("${verse['chapter']}:${verse['verse']}"),
-                                ],
-                              ),
-                              title: Text(verse['text']),
-                            ),
+                            child: VerseCard(provider: provider, verse: verse),
                           );
                         });
                         return _lastResults;
@@ -361,12 +351,11 @@ class _HomeState extends State<Home> {
                                   },
                                 );
                               } else {
-                                return ListTile(
-                                  leading: Text(
-                                    "[${verse['verse']}]",
-                                    style: TextStyle(color: scheme.primary),
-                                  ),
-                                  title: Text(verse['text']),
+                                return VerseCard(
+                                  provider: provider,
+                                  verse: verse,
+                                  verseName: "${verse['verse']}",
+                                  opacity: 20,
                                 );
                               }
                             },
@@ -407,6 +396,62 @@ class _HomeState extends State<Home> {
     _scrollChapter.jumpTo(selection.chapterIndex * bookAndChapterItemHeight);
 
     _initialScrollCompleted = true;
+  }
+}
+
+// ignore: must_be_immutable
+class VerseCard extends StatelessWidget {
+  VerseCard({
+    super.key,
+    required this.provider,
+    required this.verse,
+    this.color,
+    this.verseName,
+    this.opacity = 10,
+  });
+
+  final BibleProvider provider;
+  final Map<String, dynamic> verse;
+  final Color? color;
+  final String? verseName;
+
+  /// Values from 0-255
+  int opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    opacity = opacity.clamp(0, 255);
+    return Container(
+      padding: EdgeInsets.all(12),
+      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color:
+            color ?? Theme.of(context).colorScheme.primary.withAlpha(opacity),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: RichText(
+        text: TextSpan(
+          text:
+              verseName ??
+              "${provider.books.firstWhere((b) => b['id'] == verse['book_id'])['name']} ${verse['chapter']}:${verse['verse']}",
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            fontFamily: "Merriweather",
+          ),
+          children: [
+            TextSpan(
+              text: "   ${verse['text']}",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -470,7 +515,7 @@ class _FlashingListTileState extends State<_FlashingListTile>
       TweenSequenceItem(
         tween: ColorTween(
           begin: colorScheme.primaryContainer,
-          end: Colors.transparent,
+          end: colorScheme.primary.withAlpha(20),
         ),
         weight: 1,
       ),
@@ -487,16 +532,15 @@ class _FlashingListTileState extends State<_FlashingListTile>
 
   @override
   Widget build(BuildContext context) {
+    BibleProvider provider = Provider.of<BibleProvider>(context);
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
-        return ListTile(
-          tileColor: _colorAnimation.value,
-          leading: Text(
-            "[${widget.verse['verse']}]",
-            style: TextStyle(color: Theme.of(context).colorScheme.primary),
-          ),
-          title: Text(widget.verse['text']),
+        return VerseCard(
+          provider: provider,
+          verse: widget.verse,
+          verseName: "${widget.verse['verse']}",
+          color: _colorAnimation.value,
         );
       },
     );
