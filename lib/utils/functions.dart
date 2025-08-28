@@ -3,7 +3,7 @@ import 'dart:math' show pow;
 import 'package:flutter/material.dart'
     show BuildContext, showAboutDialog, Image, Theme;
 import 'package:me_version_bible/models/translation.dart';
-import 'package:me_version_bible/pages/components/about_content.dart';
+import 'package:me_version_bible/components/about_content.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 int byte = pow(1024, 1).toInt();
