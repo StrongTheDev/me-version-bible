@@ -48,14 +48,13 @@ class VerseCard extends StatelessWidget {
         ),
         child: RichText(
           text: TextSpan(
-            text:
-                verseName ??
-                "${provider.books.firstWhere((b) => b['id'] == verse['book_id'])['name']} ${verse['chapter']}:${verse['verse']}",
+            text: verseName ?? provider.verseIDString(verse),
             style: TextStyle(
               color: colorScheme.primary,
               fontWeight: FontWeight.bold,
               fontSize: 16,
               fontFamily: "Merriweather",
+              letterSpacing: 0.5,
             ),
             children: [
               TextSpan(
@@ -63,6 +62,7 @@ class VerseCard extends StatelessWidget {
                 style: TextStyle(
                   color: colorScheme.secondary,
                   fontWeight: FontWeight.normal,
+                  letterSpacing: 0,
                 ),
               ),
             ],

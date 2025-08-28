@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:me_version_bible/pages/components/bible_downloadable_card.dart';
-import 'package:me_version_bible/pages/components/bible_downloaded_card.dart';
+import 'package:me_version_bible/components/bible_downloadable_card.dart';
+import 'package:me_version_bible/components/bible_downloaded_card.dart';
 import 'package:me_version_bible/providers/versions_provider.dart';
 import 'package:provider/provider.dart';
 

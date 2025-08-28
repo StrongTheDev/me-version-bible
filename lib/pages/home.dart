@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:me_version_bible/models/selection.dart';
-import 'package:me_version_bible/pages/components/custom_drawer.dart';
-import 'package:me_version_bible/pages/components/custom_list_tile.dart';
-import 'package:me_version_bible/pages/components/verse_card.dart';
+import 'package:me_version_bible/components/custom_drawer.dart';
+import 'package:me_version_bible/components/custom_list_tile.dart';
+import 'package:me_version_bible/components/verse_card.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:me_version_bible/utils/functions.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +15,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _controller = TextEditingController();
   final SearchController _searchController = SearchController();
   // scrollers
@@ -107,18 +108,24 @@ class _HomeState extends State<Home> {
           );
         }
         return Scaffold(
+          key: _scaffoldKey,
           appBar: AppBar(
             toolbarHeight: 72,
             elevation: 0,
             surfaceTintColor: Colors.transparent,
             backgroundColor: Colors.transparent,
+            leading: Row(
+              children: [
+                SizedBox(width: pad * 2),
+                IconButton(
+                  icon: Icon(Icons.menu),
+                  onPressed: () {
+                    _scaffoldKey.currentState?.openDrawer();
+                  },
+                ),
+              ],
+            ),
             actions: [
-              IconButton(
-                onPressed: () {
-                  appAboutDialog(context, provider.currentBible!.translation!);
-                },
-                icon: Icon(Icons.info),
-              ),
               IconButton(
                 onPressed: () {
                   provider.toggleTheme();
@@ -129,7 +136,7 @@ class _HomeState extends State<Home> {
                       : Icons.light_mode,
                 ),
               ),
-              SizedBox(width: pad),
+              SizedBox(width: pad * 2),
             ],
             title: Padding(
               padding: EdgeInsets.all(pad),
@@ -138,22 +145,37 @@ class _HomeState extends State<Home> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Column(
-                      children: [
-                        SizedBox.square(
-                          dimension: 32,
-                          child: Image.asset("assets/icon.png"),
+                  ElevatedButton(
+                    style: ButtonStyle(
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        Text(
-                          "Me Version Bible",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: () {
+                      appAboutDialog(
+                        context,
+                        provider.currentBible!.translation!,
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Column(
+                        children: [
+                          SizedBox.square(
+                            dimension: 32,
+                            child: Image.asset("assets/icon.png"),
                           ),
-                        ),
-                      ],
+                          Text(
+                            "Me Version Bible",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   Expanded(
@@ -193,8 +215,10 @@ class _HomeState extends State<Home> {
                           idx,
                         ) {
                           var verse = results[idx];
-                          return GestureDetector(
-                            onTap: () {
+                          return VerseCard(
+                            provider: provider,
+                            verse: verse,
+                            onSelect: () {
                               chooseVerse(
                                 Selection.at(
                                   verse['book_id'] - 1,
@@ -204,7 +228,6 @@ class _HomeState extends State<Home> {
                               );
                               _searchController.closeView(_searchQuery);
                             },
-                            child: VerseCard(provider: provider, verse: verse),
                           );
                         });
                         return _lastResults;
@@ -278,8 +301,12 @@ class _HomeState extends State<Home> {
                         padding: EdgeInsets.all(pad),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(pad),
-                          color: scheme.inversePrimary,
+                          border: BoxBorder.all(
+                            color: scheme.inversePrimary,
+                            width: 1,
+                          ),
                         ),
+                        height: double.infinity,
                         child: ListView.builder(
                           shrinkWrap: true,
                           controller: _scrollChapter,
@@ -355,8 +382,18 @@ class _HomeState extends State<Home> {
                                 return VerseCard(
                                   provider: provider,
                                   verse: verse,
-                                  verseName: "${verse['verse']}",
+                                  // verseName: provider.verseIDString(
+                                  //   verse,
+                                  //   false,
+                                  // ),
                                   opacity: 20,
+                                  selected: provider.isVerseSelected(
+                                    verse['id'],
+                                  ),
+                                  onSelect: () => provider
+                                      .selectOrDeselectVerse(verse['id']),
+                                  onRightClick: () =>
+                                      provider.quickCopyVerses(context),
                                 );
                               }
                             },
@@ -484,7 +521,7 @@ class _FlashingListTileState extends State<_FlashingListTile>
         return VerseCard(
           provider: provider,
           verse: widget.verse,
-          verseName: "${widget.verse['verse']}",
+          // verseName: provider.verseIDString(widget.verse, false),
           color: _colorAnimation.value,
         );
       },

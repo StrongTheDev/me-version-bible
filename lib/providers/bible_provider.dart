@@ -1,6 +1,7 @@
 import 'dart:io' show Directory, File;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:me_version_bible/models/bible.dart';
 import 'package:me_version_bible/models/selection.dart';
 import 'package:me_version_bible/models/setting.dart';
@@ -102,11 +103,13 @@ class BibleProvider extends ChangeNotifier {
   }
 
   Future<void> selectBible(Bible bible) async {
+    clearSelectedVerses();
     currentBible = bible;
     loadBible();
   }
 
   Future<void> selectBook(int index) async {
+    clearSelectedVerses();
     _setting.selection.bookIndex = index;
     _loadChaptersAndSetIndexBounds();
     notifyListeners();
@@ -114,6 +117,7 @@ class BibleProvider extends ChangeNotifier {
   }
 
   Future<void> selectChapter(int index) async {
+    clearSelectedVerses();
     _setting.selection.chapterIndex = index;
     notifyListeners();
     _saveSettings();
@@ -178,7 +182,7 @@ class BibleProvider extends ChangeNotifier {
       weights[v['id']] = weight;
       return isText;
     }).toList();
-    
+
     filteredVerses2.sort((a, b) {
       int w1 = weights[a['id']]!;
       int w2 = weights[b['id']]!;
@@ -256,5 +260,72 @@ class BibleProvider extends ChangeNotifier {
     if (_setting.selection.chapterIndex >= chapters.length) {
       _setting.selection.chapterIndex = chapters.length - 1;
     }
+  }
+
+  // selecting verses
+  final List<int> _selectedVerseIDs = [];
+  bool get hasVersesSelected => _selectedVerseIDs.isNotEmpty;
+  bool isVerseSelected(int verseId) =>
+      _selectedVerseIDs.isNotEmpty && _selectedVerseIDs.contains(verseId);
+
+  void selectOrDeselectVerse(int verseId) {
+    if (isVerseSelected(verseId)) {
+      _selectedVerseIDs.remove(verseId);
+    } else {
+      _selectedVerseIDs.add(verseId);
+    }
+    notifyListeners();
+  }
+
+  void clearSelectedVerses({bool notify = false}) {
+    _selectedVerseIDs.clear();
+    if (notify) notifyListeners();
+  }
+
+  void quickCopyVerses(BuildContext context) {
+    if (!hasVersesSelected) return;
+    // get book details
+    String book = books[_lastSelection.bookIndex]['name'];
+    int chapter = chapters.elementAt(_lastSelection.chapterIndex);
+    String header = "$book $chapter ($_lastTranslation):\n";
+    // get verses
+    List<Map<String, dynamic>> selectedVerses = verses
+        .where((verse) => _selectedVerseIDs.contains(verse['id']))
+        .toList();
+    var versesToText = selectedVerses.map(
+      (verse) => "[${verse['verse']}] ${verse['text']}",
+    );
+    String joinedVerses = versesToText.join("\n");
+    String finalContent = "$header$joinedVerses";
+    // debugPrint(finalContent);
+    Clipboard.setData(ClipboardData(text: finalContent));
+
+    // notify users
+    var scaffoldMessenger = ScaffoldMessenger.of(context);
+    scaffoldMessenger.removeCurrentSnackBar();
+    scaffoldMessenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          "Copied verses to clipboard",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        width: 300,
+        behavior: SnackBarBehavior.floating,
+        duration: Durations.extralong3,
+      ),
+      snackBarAnimationStyle: AnimationStyle(curve: Curves.bounceIn),
+    );
+    // cleanup
+    clearSelectedVerses(notify: true);
+  }
+
+  // represent a verse uniquely
+
+  String verseIDString(Map<String, dynamic> verse, [bool showBookName = true]) {
+    String compressedBookName = !showBookName
+        ? ""
+        : "${books.firstWhere((b) => b['id'] == verse['book_id'])['name'].toString().replaceFirst("II ", "2").replaceFirst("I ", "1").replaceFirst(" ", "").substring(0, 3)}  ";
+
+    return "$compressedBookName${verse['chapter']}:${verse['verse']}";
   }
 }
