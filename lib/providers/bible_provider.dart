@@ -324,7 +324,7 @@ class BibleProvider extends ChangeNotifier {
   String verseIDString(Map<String, dynamic> verse, [bool showBookName = true]) {
     String compressedBookName = !showBookName
         ? ""
-        : "${books.firstWhere((b) => b['id'] == verse['book_id'])['name'].toString().replaceFirst("II ", "2").replaceFirst("I ", "1").replaceFirst(" ", "").substring(0, 3)}  ";
+        : "${books.firstWhere((b) => b['id'] == verse['book_id'])['name'].toString().replaceFirst("III ", "3").replaceFirst("II ", "2").replaceFirst("I ", "1").replaceFirst(" ", "").substring(0, 3)}  ";
 
     return "$compressedBookName${verse['chapter']}:${verse['verse']}";
   }
