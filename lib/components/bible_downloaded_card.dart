@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:me_version_bible/models/bible.dart';
-import 'package:me_version_bible/pages/components/statistic_row.dart';
+import 'package:me_version_bible/components/statistic_row.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:me_version_bible/utils/functions.dart';
 import 'package:provider/provider.dart' show Provider;
