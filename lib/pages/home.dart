@@ -31,6 +31,7 @@ class _HomeState extends State<Home> {
   int? _verseToAnimate;
   int? _bookIdToAnimate;
   int? _chapterToAnimate;
+  double bookAndChapterItemHeight = 25;
 
   @override
   Widget build(BuildContext context) {
@@ -60,12 +61,12 @@ class _HomeState extends State<Home> {
         curve: Curves.easeInOut,
       );
       _scrollChapter.animateTo(
-        selection.chapterIndex * 48,
+        selection.chapterIndex * bookAndChapterItemHeight,
         duration: Durations.long1,
         curve: Curves.easeInOut,
       );
       _scrollBook.animateTo(
-        selection.bookIndex * 48,
+        selection.bookIndex * bookAndChapterItemHeight,
         duration: Durations.long1,
         curve: Curves.easeInOut,
       );
@@ -278,6 +279,7 @@ class _HomeState extends State<Home> {
                                     text: provider.books[index]['name'],
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 12,
                                     ),
                                     selected:
                                         provider.setting.selection.bookIndex ==
@@ -426,7 +428,7 @@ class _HomeState extends State<Home> {
     final provider = Provider.of<BibleProvider>(context, listen: false);
     final selection = provider.setting.selection;
 
-    const double bookAndChapterItemHeight = 48.0;
+    // const double bookAndChapterItemHeight = 48.0;
 
     // Using jumpTo for an instantaneous scroll on load is often better
     // than an animation.

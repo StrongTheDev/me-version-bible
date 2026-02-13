@@ -17,19 +17,32 @@ class CustomListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      clipBehavior: Clip.hardEdge,
-      surfaceTintColor: Colors.transparent,
-      color: Colors.transparent,
-      child: ListTile(
-        style: ListTileStyle.list,
-        title: Text(text, style: style),
-        selected: selected,
-        selectedColor: Theme.of(context).colorScheme.surface,
-        selectedTileColor: Theme.of(context).colorScheme.secondary,
-        onTap: onTap,
-        shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(8),
+    var styleVar = style ?? TextStyle();
+    return GestureDetector(
+      onTap: onTap,
+      child: Material(
+        clipBehavior: Clip.hardEdge,
+        surfaceTintColor: Colors.transparent,
+        color: Colors.transparent,
+        child: Container(
+          // height: 32,
+          decoration: ShapeDecoration(
+            shape: RoundedSuperellipseBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            color: selected
+                ? Theme.of(context).colorScheme.secondary
+                : Theme.of(context).colorScheme.surface,
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Text(
+            text,
+            style: styleVar.copyWith(
+              color: selected
+                  ? Theme.of(context).colorScheme.surface
+                  : Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
         ),
       ),
     );
