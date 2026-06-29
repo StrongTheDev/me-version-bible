@@ -1,17 +1,17 @@
 // ignore_for_file: must_be_immutable
 
 import 'package:flutter/material.dart';
-import 'package:me_version_bible/models/bible.dart';
 import 'package:me_version_bible/components/statistic_row.dart';
+import 'package:me_version_bible/models/bible.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:me_version_bible/utils/functions.dart';
 import 'package:provider/provider.dart' show Provider;
 
 class BibleCard extends StatefulWidget {
-  const BibleCard({super.key, required this.bible, required this.stats});
-
   final Bible bible;
+
   final Map<String, dynamic> stats;
+  const BibleCard({super.key, required this.bible, required this.stats});
 
   @override
   State<BibleCard> createState() => _BibleCardState();
@@ -20,77 +20,6 @@ class BibleCard extends StatefulWidget {
 class _BibleCardState extends State<BibleCard> {
   bool expanded = false;
   late BibleProvider bibleProvider;
-
-  void deleteBible() {
-    if (bibleProvider.bibles.length == 1) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text("Oops!"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("You must have at least one Bible"),
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                label: Text("I Understand"),
-                icon: Icon(Icons.check),
-              ),
-            ],
-          ),
-        ),
-      );
-      return;
-    }
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: EdgeInsets.all(16),
-        height: 210,
-        child: Column(
-          spacing: 16,
-          children: [
-            Text(
-              widget.bible.name,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            Text("Are you sure you want to delete this bible?"),
-            Row(
-              spacing: 8,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("Cancel"),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    bibleProvider.deleteBible(widget.bible);
-                  },
-                  icon: Icon(Icons.delete_forever_outlined),
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStatePropertyAll(Colors.red),
-                    foregroundColor: WidgetStatePropertyAll(Colors.white),
-                  ),
-                  label: Text("Delete"),
-                ),
-              ],
-            ),
-            Text(
-              "(${fromBytes(widget.stats['size'] ?? 0)})",
-              style: TextStyle(
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -228,6 +157,77 @@ class _BibleCardState extends State<BibleCard> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void deleteBible() {
+    if (bibleProvider.bibles.length == 1) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Oops!"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("You must have at least one Bible"),
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                label: Text("I Understand"),
+                icon: Icon(Icons.check),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(16),
+        height: 210,
+        child: Column(
+          spacing: 16,
+          children: [
+            Text(
+              widget.bible.name,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            Text("Are you sure you want to delete this bible?"),
+            Row(
+              spacing: 8,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel"),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    bibleProvider.deleteBible(widget.bible);
+                  },
+                  icon: Icon(Icons.delete_forever_outlined),
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStatePropertyAll(Colors.red),
+                    foregroundColor: WidgetStatePropertyAll(Colors.white),
+                  ),
+                  label: Text("Delete"),
+                ),
+              ],
+            ),
+            Text(
+              "(${fromBytes(widget.stats['size'] ?? 0)})",
+              style: TextStyle(
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
     );

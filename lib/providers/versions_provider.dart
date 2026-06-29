@@ -21,7 +21,9 @@ class BibleVersionsProvider extends ChangeNotifier {
 
   String _filterString = "";
   final Set<String> _downloading = {};
-  bool get downloadsAvailable => _downloads != null && _downloads!.isNotEmpty;
+  BibleVersionsProvider(this._bibleProvider) {
+    reload();
+  }
 
   List<BibleDownloadable>? get downloads => _downloads
       ?.where((b) => !hideDownloaded || !isDownloaded(b.name))
@@ -33,11 +35,9 @@ class BibleVersionsProvider extends ChangeNotifier {
       )
       .toList();
 
-  Set<Bible> get existingBibles => _bibleProvider.bibles;
+  bool get downloadsAvailable => _downloads != null && _downloads!.isNotEmpty;
 
-  BibleVersionsProvider(this._bibleProvider) {
-    reload();
-  }
+  Set<Bible> get existingBibles => _bibleProvider.bibles;
 
   Future<bool> checkInternetConnection() async {
     try {
@@ -48,6 +48,34 @@ class BibleVersionsProvider extends ChangeNotifier {
     } catch (e) {
       return false;
     }
+  }
+
+  void filterWith(String value) {
+    _filterString = value;
+    notifyListeners();
+  }
+
+  Future<Map<String, dynamic>> getStats(Bible bible) async {
+    return await getDBStats(bible);
+  }
+
+  bool isDownloaded(String name) {
+    return existingBibles
+        .where((s) => s.path.contains("$separator$name"))
+        .isNotEmpty;
+  }
+
+  bool isDownloading(String name) {
+    return _downloading.contains(name);
+  }
+
+  void queueDownload(BibleDownloadable bible) async {
+    _downloading.add(bible.name);
+    notifyListeners();
+    await downloadBible(bible);
+    _downloading.remove(bible.name);
+    _bibleProvider.initBibles();
+    notifyListeners();
   }
 
   void reload() async {
@@ -74,36 +102,8 @@ class BibleVersionsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool isDownloaded(String name) {
-    return existingBibles
-        .where((s) => s.path.contains("$separator$name"))
-        .isNotEmpty;
-  }
-
   void setHideDownloaded(bool v) {
     hideDownloaded = v;
     notifyListeners();
-  }
-
-  void filterWith(String value) {
-    _filterString = value;
-    notifyListeners();
-  }
-
-  void queueDownload(BibleDownloadable bible) async {
-    _downloading.add(bible.name);
-    notifyListeners();
-    await downloadBible(bible);
-    _downloading.remove(bible.name);
-    _bibleProvider.initBibles();
-    notifyListeners();
-  }
-
-  bool isDownloading(String name) {
-    return _downloading.contains(name);
-  }
-
-  Future<Map<String, dynamic>> getStats(Bible bible) async {
-    return await getDBStats(bible);
   }
 }

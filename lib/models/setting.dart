@@ -8,16 +8,6 @@ class Setting {
 
   Setting();
 
-  /// Converts this [Setting] instance to a [Map] for database storage.
-  Map<String, dynamic> toMap() {
-    return {
-      'lastBiblePath': lastBiblePath,
-      'themeColorIndex': themeColorIndex,
-      'lightTheme': lightTheme ? 1 : 0, // Store bool as an integer (1 or 0)
-      'selection': selection.toString(), // Store Selection as a String
-    };
-  }
-
   /// Creates a [Setting] instance from a [Map] from the database.
   factory Setting.fromMap(Map<String, dynamic> map) {
     final setting = Setting();
@@ -34,5 +24,15 @@ class Setting {
       }
     }
     return setting;
+  }
+
+  /// Converts this [Setting] instance to a [Map] for database storage.
+  Map<String, dynamic> toMap() {
+    return {
+      'lastBiblePath': lastBiblePath,
+      'themeColorIndex': themeColorIndex,
+      'lightTheme': lightTheme ? 1 : 0, // Store bool as an integer (1 or 0)
+      'selection': selection.toString(), // Store Selection as a String
+    };
   }
 }

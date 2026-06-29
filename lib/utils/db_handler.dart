@@ -8,31 +8,9 @@ import 'package:path/path.dart' show join;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-Database? _settings;
 Database? _database;
+Database? _settings;
 Database? get database => _database;
-
-Future<void> openBibleDatabase(Bible bible) async {
-  _database = await databaseFactory.openDatabase(bible.path);
-}
-
-Future<List<Map<String, dynamic>>> getBooks(Bible bible) async {
-  return await database!.query(bible.books);
-}
-
-Future<List<Map<String, dynamic>>> getVerses(Bible bible) async {
-  return await database!.query(bible.verses);
-}
-
-Future<List<Map<String, dynamic>>> getAvailableBooks(Bible bible) {
-  return database!.query(
-    bible.verses,
-    distinct: true,
-    columns: ['book_id'],
-    orderBy: 'book_id',
-    where: "text IS NOT ''",
-  );
-}
 
 // Future<List<Map<String, dynamic>>> getVerseSearch(
 //   Bible bible,
@@ -54,9 +32,18 @@ String buildWhereClause(String column, List<String> patterns) {
   return conditions;
 }
 
-void loadTranslations(Bible bible) async {
-  List<Map<String, dynamic>> q = await database!.query("translations");
-  bible.translation = Translation.fromMap(q.first);
+Future<List<Map<String, dynamic>>> getAvailableBooks(Bible bible) {
+  return database!.query(
+    bible.verses,
+    distinct: true,
+    columns: ['book_id'],
+    orderBy: 'book_id',
+    where: "text IS NOT ''",
+  );
+}
+
+Future<List<Map<String, dynamic>>> getBooks(Bible bible) async {
+  return await database!.query(bible.books);
 }
 
 Future<Map<String, dynamic>> getDBStats(Bible bible) async {
@@ -81,6 +68,10 @@ Future<Map<String, dynamic>> getDBStats(Bible bible) async {
     await db.close();
   }
   return result;
+}
+
+Future<List<Map<String, dynamic>>> getVerses(Bible bible) async {
+  return await database!.query(bible.verses);
 }
 
 /// Initializes the settings database.
@@ -110,17 +101,6 @@ Future<void> initSettingsDatabase() async {
   );
 }
 
-/// Saves the provided [Setting] object to the database.
-Future<void> saveSetting(Setting setting) async {
-  if (_settings == null) await initSettingsDatabase();
-  await _settings!.update(
-    'settings',
-    setting.toMap(),
-    where: 'id = ?',
-    whereArgs: [1], // We always update the row with id=1
-  );
-}
-
 /// Loads the [Setting] object from the database.
 Future<Setting> loadSetting() async {
   if (_settings == null) await initSettingsDatabase();
@@ -134,4 +114,24 @@ Future<Setting> loadSetting() async {
     return Setting.fromMap(maps.first);
   }
   return Setting(); // Return default settings if not found
+}
+
+void loadTranslations(Bible bible) async {
+  List<Map<String, dynamic>> q = await database!.query("translations");
+  bible.translation = Translation.fromMap(q.first);
+}
+
+Future<void> openBibleDatabase(Bible bible) async {
+  _database = await databaseFactory.openDatabase(bible.path);
+}
+
+/// Saves the provided [Setting] object to the database.
+Future<void> saveSetting(Setting setting) async {
+  if (_settings == null) await initSettingsDatabase();
+  await _settings!.update(
+    'settings',
+    setting.toMap(),
+    where: 'id = ?',
+    whereArgs: [1], // We always update the row with id=1
+  );
 }

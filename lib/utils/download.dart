@@ -1,7 +1,8 @@
+import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'package:me_version_bible/models/bible_downloadable.dart';
 import 'package:path/path.dart';
-import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 Future<File> downloadBible(BibleDownloadable bible) async {

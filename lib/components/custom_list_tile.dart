@@ -2,6 +2,15 @@ import 'package:flutter/material.dart';
 
 // ignore: must_be_immutable
 class CustomListTile extends StatelessWidget {
+  final String text;
+  
+  final bool selected;
+  final TextStyle style;
+  final EdgeInsetsGeometry? padding;
+  final double borderRadius;
+  final double? width;
+  final double? height;
+  void Function()? onTap;
   CustomListTile({
     super.key,
     required this.text,
@@ -13,15 +22,6 @@ class CustomListTile extends StatelessWidget {
     this.style = const TextStyle(),
     this.borderRadius = 4,
   });
-
-  final String text;
-  final bool selected;
-  final TextStyle style;
-  final EdgeInsetsGeometry? padding;
-  final double borderRadius;
-  final double? width;
-  final double? height;
-  void Function()? onTap;
 
   @override
   Widget build(BuildContext context) {

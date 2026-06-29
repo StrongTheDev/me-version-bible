@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:me_version_bible/models/translation.dart';
 
 class AboutContent extends StatelessWidget {
+  final ThemeData theme;
+
+  final Translation translation;
   const AboutContent({
     super.key,
     required this.theme,
     required this.translation,
   });
-
-  final ThemeData theme;
-  final Translation translation;
 
   @override
   Widget build(BuildContext context) {

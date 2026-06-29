@@ -3,6 +3,17 @@ import 'package:me_version_bible/providers/bible_provider.dart';
 
 // ignore: must_be_immutable
 class VerseCard extends StatelessWidget {
+  final BibleProvider provider;
+  
+  final Map<String, dynamic> verse;
+  final Color? color;
+  final String? verseName;
+  final void Function()? onSelect;
+  final void Function()? onRightClick;
+  /// Values from 0-255
+  int opacity;
+
+  final bool selected;
   VerseCard({
     super.key,
     required this.provider,
@@ -14,17 +25,6 @@ class VerseCard extends StatelessWidget {
     this.onRightClick,
     this.selected = false,
   });
-
-  final BibleProvider provider;
-  final Map<String, dynamic> verse;
-  final Color? color;
-  final String? verseName;
-  final void Function()? onSelect;
-  final void Function()? onRightClick;
-
-  /// Values from 0-255
-  int opacity;
-  final bool selected;
 
   @override
   Widget build(BuildContext context) {

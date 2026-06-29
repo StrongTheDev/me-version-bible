@@ -3,6 +3,11 @@
 import 'package:flutter/material.dart';
 
 class StatisticRow extends StatelessWidget {
+  final IconData icon;
+  
+  final String label;
+  final String value;
+  final Widget? trailing;
   const StatisticRow({
     super.key,
     required this.icon,
@@ -10,11 +15,6 @@ class StatisticRow extends StatelessWidget {
     required this.value,
     this.trailing,
   });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {

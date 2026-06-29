@@ -19,56 +19,41 @@ class BibleProvider extends ChangeNotifier {
   String _biblesDirectoryPath = '';
 
   final Set<Bible> _bibles = {};
-  Set<Bible> get bibles => _bibles;
   Bible? currentBible;
-
   List<Map<String, dynamic>> books = [];
-  Setting _setting = Setting();
-  Setting get setting => _setting;
 
+  Setting _setting = Setting();
   // int currentBookIndex = 0;
   Set<int> chapters = {};
   Set<int> bookIdFilters = {};
+
   // int currentChapterIndex = 0;
   Selection _lastSelection = Selection.at(-1, -1);
   String _lastTranslation = '';
   List<Map<String, dynamic>> _verses = [];
   List<Map<String, dynamic>> _versesCache = [];
-  List<Map<String, dynamic>> get verses => _v();
-
-  List<Map<String, dynamic>> _v() {
-    var currT = currentBible!.translation;
-    if (_lastSelection == setting.selection &&
-        _versesCache.isNotEmpty &&
-        currT != null &&
-        _lastTranslation == currT.translation) {
-      return _versesCache;
-    }
-    _lastSelection = Selection.at(
-      setting.selection.bookIndex,
-      setting.selection.chapterIndex,
-    );
-    _lastTranslation = currentBible!.translation!.translation;
-    _versesCache = _verses.where((verse) {
-      bool isChapter =
-          verse['chapter'] ==
-          chapters.elementAt(setting.selection.chapterIndex);
-      bool isBook =
-          verse['book_id'] == books[setting.selection.bookIndex]['id'];
-      return isChapter && isBook;
-    }).toList();
-    return _versesCache;
-  }
-
+  // selecting verses
+  final List<int> _selectedVerseIDs = [];
   BibleProvider() {
     initFiles();
   }
+  Set<Bible> get bibles => _bibles;
 
-  void initFiles() async {
-    _setting = await loadSetting();
-    var directory = await getApplicationSupportDirectory();
-    _documentsDirectoryPath = directory.path;
-    initBibles();
+  bool get hasVersesSelected => _selectedVerseIDs.isNotEmpty;
+
+  Setting get setting => _setting;
+
+  List<Map<String, dynamic>> get verses => _v();
+
+  void clearSelectedVerses({bool notify = false}) {
+    _selectedVerseIDs.clear();
+    if (notify) notifyListeners();
+  }
+
+  void deleteBible(Bible bible) {
+    File(bible.path).deleteSync();
+    _bibles.remove(bible);
+    notifyListeners();
   }
 
   Future<void> initBibles() async {
@@ -102,31 +87,62 @@ class BibleProvider extends ChangeNotifier {
     loadBible();
   }
 
-  Future<void> selectBible(Bible bible) async {
-    clearSelectedVerses();
-    currentBible = bible;
-    loadBible();
+  void initFiles() async {
+    _setting = await loadSetting();
+    var directory = await getApplicationSupportDirectory();
+    _documentsDirectoryPath = directory.path;
+    initBibles();
   }
 
-  Future<void> selectBook(int index) async {
-    clearSelectedVerses();
-    _setting.selection.bookIndex = index;
+  bool isVerseSelected(int verseId) =>
+      _selectedVerseIDs.isNotEmpty && _selectedVerseIDs.contains(verseId);
+
+  // new functions
+
+  void loadBible() async {
+    if (currentBible == null) return;
+    await _getData();
+    await _filterData();
     _loadChaptersAndSetIndexBounds();
     notifyListeners();
     _saveSettings();
   }
 
-  Future<void> selectChapter(int index) async {
-    clearSelectedVerses();
-    _setting.selection.chapterIndex = index;
-    notifyListeners();
-    _saveSettings();
-  }
+  void quickCopyVerses(BuildContext context) {
+    if (!hasVersesSelected) return;
+    // get book details
+    String book = books[_lastSelection.bookIndex]['name'];
+    int chapter = chapters.elementAt(_lastSelection.chapterIndex);
+    String header = "$book $chapter ($_lastTranslation):\n";
+    // get verses
+    List<Map<String, dynamic>> selectedVerses = verses
+        .where((verse) => _selectedVerseIDs.contains(verse['id']))
+        .toList();
+    var versesToText = selectedVerses.map(
+      (verse) => "[${verse['verse']}] ${verse['text']}",
+    );
+    String joinedVerses = versesToText.join("\n");
+    String finalContent = "$header$joinedVerses";
+    // debugPrint(finalContent);
+    Clipboard.setData(ClipboardData(text: finalContent));
 
-  void toggleTheme() {
-    _setting.lightTheme = !_setting.lightTheme;
-    notifyListeners();
-    _saveSettings();
+    // notify users
+    var scaffoldMessenger = ScaffoldMessenger.of(context);
+    scaffoldMessenger.removeCurrentSnackBar();
+    scaffoldMessenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          "Copied verses to clipboard",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        width: 300,
+        behavior: SnackBarBehavior.floating,
+        duration: Durations.extralong3,
+      ),
+      snackBarAnimationStyle: AnimationStyle(curve: Curves.bounceIn),
+    );
+    // cleanup
+    clearSelectedVerses(notify: true);
   }
 
   List<Map<String, dynamic>> searchVerse(String search) {
@@ -194,9 +210,33 @@ class BibleProvider extends ChangeNotifier {
     return filteredVerses2;
   }
 
-  void deleteBible(Bible bible) {
-    File(bible.path).deleteSync();
-    _bibles.remove(bible);
+  Future<void> selectBible(Bible bible) async {
+    clearSelectedVerses();
+    currentBible = bible;
+    loadBible();
+  }
+
+  Future<void> selectBook(int index) async {
+    clearSelectedVerses();
+    _setting.selection.bookIndex = index;
+    _loadChaptersAndSetIndexBounds();
+    notifyListeners();
+    _saveSettings();
+  }
+
+  Future<void> selectChapter(int index) async {
+    clearSelectedVerses();
+    _setting.selection.chapterIndex = index;
+    notifyListeners();
+    _saveSettings();
+  }
+
+  void selectOrDeselectVerse(int verseId) {
+    if (isVerseSelected(verseId)) {
+      _selectedVerseIDs.remove(verseId);
+    } else {
+      _selectedVerseIDs.add(verseId);
+    }
     notifyListeners();
   }
 
@@ -206,19 +246,30 @@ class BibleProvider extends ChangeNotifier {
     _saveSettings();
   }
 
-  void _saveSettings() async {
-    await saveSetting(setting);
-  }
-
-  // new functions
-
-  void loadBible() async {
-    if (currentBible == null) return;
-    await _getData();
-    await _filterData();
-    _loadChaptersAndSetIndexBounds();
+  void toggleTheme() {
+    _setting.lightTheme = !_setting.lightTheme;
     notifyListeners();
     _saveSettings();
+  }
+  // represent a verse uniquely
+
+  String verseIDString(Map<String, dynamic> verse, [bool showBookName = true]) {
+    String compressedBookName = !showBookName
+        ? ""
+        : "${books.firstWhere((b) => b['id'] == verse['book_id'])['name'].toString().replaceFirst("III ", "3").replaceFirst("II ", "2").replaceFirst("I ", "1").replaceFirst(" ", "").substring(0, 3)}  ";
+
+    return "$compressedBookName${verse['chapter']}:${verse['verse']}";
+  }
+  Future<void> _filterData() async {
+    // Filter books
+    bookIdFilters.clear();
+    var bookFilters = await getAvailableBooks(currentBible!);
+    for (var book in bookFilters) {
+      bookIdFilters.add(book['book_id'] as int);
+    }
+    books = books.where((b) => bookIdFilters.contains(b['id'])).toList();
+    // Filter verses
+    _verses = _verses.where((v) => (v['text'] as String).isNotEmpty).toList();
   }
 
   Future<void> _getData() async {
@@ -230,18 +281,6 @@ class BibleProvider extends ChangeNotifier {
     _verses.clear();
     books.addAll(await getBooks(currentBible!));
     _verses.addAll(await getVerses(currentBible!));
-  }
-
-  Future<void> _filterData() async {
-    // Filter books
-    bookIdFilters.clear();
-    var bookFilters = await getAvailableBooks(currentBible!);
-    for (var book in bookFilters) {
-      bookIdFilters.add(book['book_id'] as int);
-    }
-    books = books.where((b) => bookIdFilters.contains(b['id'])).toList();
-    // Filter verses
-    _verses = _verses.where((v) => (v['text'] as String).isNotEmpty).toList();
   }
 
   void _loadChaptersAndSetIndexBounds() {
@@ -262,70 +301,31 @@ class BibleProvider extends ChangeNotifier {
     }
   }
 
-  // selecting verses
-  final List<int> _selectedVerseIDs = [];
-  bool get hasVersesSelected => _selectedVerseIDs.isNotEmpty;
-  bool isVerseSelected(int verseId) =>
-      _selectedVerseIDs.isNotEmpty && _selectedVerseIDs.contains(verseId);
+  void _saveSettings() async {
+    await saveSetting(setting);
+  }
 
-  void selectOrDeselectVerse(int verseId) {
-    if (isVerseSelected(verseId)) {
-      _selectedVerseIDs.remove(verseId);
-    } else {
-      _selectedVerseIDs.add(verseId);
+  List<Map<String, dynamic>> _v() {
+    var currT = currentBible!.translation;
+    if (_lastSelection == setting.selection &&
+        _versesCache.isNotEmpty &&
+        currT != null &&
+        _lastTranslation == currT.translation) {
+      return _versesCache;
     }
-    notifyListeners();
-  }
-
-  void clearSelectedVerses({bool notify = false}) {
-    _selectedVerseIDs.clear();
-    if (notify) notifyListeners();
-  }
-
-  void quickCopyVerses(BuildContext context) {
-    if (!hasVersesSelected) return;
-    // get book details
-    String book = books[_lastSelection.bookIndex]['name'];
-    int chapter = chapters.elementAt(_lastSelection.chapterIndex);
-    String header = "$book $chapter ($_lastTranslation):\n";
-    // get verses
-    List<Map<String, dynamic>> selectedVerses = verses
-        .where((verse) => _selectedVerseIDs.contains(verse['id']))
-        .toList();
-    var versesToText = selectedVerses.map(
-      (verse) => "[${verse['verse']}] ${verse['text']}",
+    _lastSelection = Selection.at(
+      setting.selection.bookIndex,
+      setting.selection.chapterIndex,
     );
-    String joinedVerses = versesToText.join("\n");
-    String finalContent = "$header$joinedVerses";
-    // debugPrint(finalContent);
-    Clipboard.setData(ClipboardData(text: finalContent));
-
-    // notify users
-    var scaffoldMessenger = ScaffoldMessenger.of(context);
-    scaffoldMessenger.removeCurrentSnackBar();
-    scaffoldMessenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          "Copied verses to clipboard",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        width: 300,
-        behavior: SnackBarBehavior.floating,
-        duration: Durations.extralong3,
-      ),
-      snackBarAnimationStyle: AnimationStyle(curve: Curves.bounceIn),
-    );
-    // cleanup
-    clearSelectedVerses(notify: true);
-  }
-
-  // represent a verse uniquely
-
-  String verseIDString(Map<String, dynamic> verse, [bool showBookName = true]) {
-    String compressedBookName = !showBookName
-        ? ""
-        : "${books.firstWhere((b) => b['id'] == verse['book_id'])['name'].toString().replaceFirst("III ", "3").replaceFirst("II ", "2").replaceFirst("I ", "1").replaceFirst(" ", "").substring(0, 3)}  ";
-
-    return "$compressedBookName${verse['chapter']}:${verse['verse']}";
+    _lastTranslation = currentBible!.translation!.translation;
+    _versesCache = _verses.where((verse) {
+      bool isChapter =
+          verse['chapter'] ==
+          chapters.elementAt(setting.selection.chapterIndex);
+      bool isBook =
+          verse['book_id'] == books[setting.selection.bookIndex]['id'];
+      return isChapter && isBook;
+    }).toList();
+    return _versesCache;
   }
 }

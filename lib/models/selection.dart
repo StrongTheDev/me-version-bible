@@ -5,11 +5,6 @@ class Selection {
   Selection();
   Selection.at(this.bookIndex, this.chapterIndex);
 
-  @override
-  String toString() {
-    return "$bookIndex:$chapterIndex";
-  }
-
   factory Selection.fromString(String str) {
     var parts = str.split(":");
     if (parts.length != 2) {
@@ -17,6 +12,9 @@ class Selection {
     }
     return Selection.at(int.parse(parts[0]), int.parse(parts[1]));
   }
+
+  @override
+  int get hashCode => Object.hash(bookIndex, chapterIndex);
 
   @override
   bool operator ==(Object other) {
@@ -29,5 +27,7 @@ class Selection {
   }
 
   @override
-  int get hashCode => Object.hash(bookIndex, chapterIndex);
+  String toString() {
+    return "$bookIndex:$chapterIndex";
+  }
 }

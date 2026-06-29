@@ -1,21 +1,21 @@
 // ignore_for_file: must_be_immutable
 
 import 'package:flutter/material.dart';
-import 'package:me_version_bible/models/bible_downloadable.dart';
 import 'package:me_version_bible/components/statistic_row.dart';
+import 'package:me_version_bible/models/bible_downloadable.dart';
 import 'package:me_version_bible/providers/versions_provider.dart';
 import 'package:me_version_bible/utils/functions.dart' show fromBytes;
 import 'package:provider/provider.dart';
 
 class BibleDownloadableCard extends StatefulWidget {
+  final BibleDownloadable data;
+
+  final bool downloaded;
   const BibleDownloadableCard({
     super.key,
     required this.data,
     required this.downloaded,
   });
-
-  final BibleDownloadable data;
-  final bool downloaded;
 
   @override
   State<BibleDownloadableCard> createState() => _BibleDownloadableCardState();

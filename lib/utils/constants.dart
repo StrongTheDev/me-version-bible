@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart' show Colors;
 
-final githubAPI = "https://api.github.com/repos";
-final githubRepo = "scrollmapper/bible_databases";
 final appColors = [
   Colors.brown,
   Colors.red,
@@ -12,3 +10,5 @@ final appColors = [
   Colors.indigo,
   Colors.purple,
 ];
+final githubAPI = "https://api.github.com/repos";
+final githubRepo = "scrollmapper/bible_databases";
