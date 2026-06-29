@@ -29,7 +29,9 @@ class Setting {
       // Safely parse the selection string.
       try {
         setting.selection = Selection.fromString(map['selection'] as String);
-      } catch (e) { /* Use default selection on error */ }
+      } catch (e) {
+        /* Use default selection on error */
+      }
     }
     return setting;
   }

@@ -6,18 +6,25 @@ class CustomListTile extends StatelessWidget {
     super.key,
     required this.text,
     required this.selected,
+    this.width,
+    this.height,
     this.onTap,
-    this.style,
+    this.padding,
+    this.style = const TextStyle(),
+    this.borderRadius = 4,
   });
 
   final String text;
   final bool selected;
-  final TextStyle? style;
+  final TextStyle style;
+  final EdgeInsetsGeometry? padding;
+  final double borderRadius;
+  final double? width;
+  final double? height;
   void Function()? onTap;
 
   @override
   Widget build(BuildContext context) {
-    var styleVar = style ?? TextStyle();
     return GestureDetector(
       onTap: onTap,
       child: Material(
@@ -25,22 +32,25 @@ class CustomListTile extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         color: Colors.transparent,
         child: Container(
-          // height: 32,
+          width: width,
+          height: height,
           decoration: ShapeDecoration(
             shape: RoundedSuperellipseBorder(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(borderRadius),
             ),
             color: selected
                 ? Theme.of(context).colorScheme.secondary
                 : Theme.of(context).colorScheme.surface,
           ),
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Text(
-            text,
-            style: styleVar.copyWith(
-              color: selected
-                  ? Theme.of(context).colorScheme.surface
-                  : Theme.of(context).colorScheme.onSurface,
+          padding: padding,
+          child: Center(
+            child: Text(
+              text,
+              style: style.copyWith(
+                color: selected
+                    ? Theme.of(context).colorScheme.surface
+                    : Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
         ),

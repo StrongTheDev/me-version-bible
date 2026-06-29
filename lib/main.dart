@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:me_version_bible/pages/Home.dart';
+import 'package:me_version_bible/pages/home.dart';
 import 'package:me_version_bible/pages/manage_versions.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:me_version_bible/providers/versions_provider.dart';
