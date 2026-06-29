@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:me_version_bible/models/selection.dart';
 import 'package:me_version_bible/components/custom_drawer.dart';
 import 'package:me_version_bible/components/custom_list_tile.dart';
 import 'package:me_version_bible/components/verse_card.dart';
+import 'package:me_version_bible/models/selection.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:me_version_bible/utils/functions.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +12,98 @@ class Home extends StatefulWidget {
 
   @override
   State<Home> createState() => _HomeState();
+}
+
+/// A ListTile that performs a flashing animation on its background.
+class _FlashingListTile extends StatefulWidget {
+  final Map<String, dynamic> verse;
+  final VoidCallback onAnimationComplete;
+
+  const _FlashingListTile({
+    required this.verse,
+    required this.onAnimationComplete,
+  });
+
+  @override
+  State<_FlashingListTile> createState() => _FlashingListTileState();
+}
+
+class _FlashingListTileState extends State<_FlashingListTile>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Color?> _colorAnimation;
+
+  @override
+  Widget build(BuildContext context) {
+    BibleProvider provider = Provider.of<BibleProvider>(context);
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return VerseCard(
+          provider: provider,
+          verse: widget.verse,
+          // verseName: provider.verseIDString(widget.verse, false),
+          color: _colorAnimation.value,
+        );
+      },
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // This sequence animates the color from transparent to the theme's
+    // primary container color and back again, twice.
+    _colorAnimation = TweenSequence<Color?>([
+      TweenSequenceItem(
+        tween: ColorTween(
+          begin: Colors.transparent,
+          end: colorScheme.primaryContainer,
+        ),
+        weight: 1,
+      ),
+      TweenSequenceItem(
+        tween: ColorTween(
+          begin: colorScheme.primaryContainer,
+          end: Colors.transparent,
+        ),
+        weight: 1,
+      ),
+      TweenSequenceItem(
+        tween: ColorTween(
+          begin: Colors.transparent,
+          end: colorScheme.primaryContainer,
+        ),
+        weight: 1,
+      ),
+      TweenSequenceItem(
+        tween: ColorTween(
+          begin: colorScheme.primaryContainer,
+          end: colorScheme.primary.withAlpha(20),
+        ),
+        weight: 1,
+      ),
+    ]).animate(_animationController);
+
+    _animationController.forward().whenComplete(widget.onAnimationComplete);
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+  }
 }
 
 class _HomeState extends State<Home> {
@@ -52,16 +144,20 @@ class _HomeState extends State<Home> {
       // NOTE: This assumes a fixed height for each verse's ListTile.
       // For more complex layouts, a package like `scrollable_positioned_list`
       // would be more reliable.
-      _scrollVerse.animateTo(
+      if (_scrollVerse.hasClients) {
+        _scrollVerse.animateTo(
         verseIndex * 56.0, // Approximate height of a ListTile
         duration: Durations.long1,
         curve: Curves.easeInOut,
       );
-      _scrollBook.animateTo(
+      }
+      if (_scrollBook.hasClients) {
+        _scrollBook.animateTo(
         selection.bookIndex * bookAndChapterItemHeight,
         duration: Durations.long1,
         curve: Curves.easeInOut,
       );
+      }
       if (!mounted) return;
 
       // Trigger the animation
@@ -234,7 +330,7 @@ class _HomeState extends State<Home> {
           drawer: CustomDrawer(),
           body: Consumer<BibleProvider>(
             builder: (context, provider, child) {
-              if (!provider.biblesExist || provider.books.isEmpty) {
+              if (!provider.biblesExist || provider.books.isEmpty || provider.chapters.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisSize: .min,
@@ -243,7 +339,7 @@ class _HomeState extends State<Home> {
                     spacing: 4,
                     children: [
                       CircularProgressIndicator.adaptive(),
-                      Text("Loading books..."),
+                      Text("Loading books & chapters..."),
                     ],
                   ),
                 );
@@ -531,98 +627,6 @@ class _HomeState extends State<Home> {
               ),
             ),
           ),
-        );
-      },
-    );
-  }
-}
-
-/// A ListTile that performs a flashing animation on its background.
-class _FlashingListTile extends StatefulWidget {
-  final Map<String, dynamic> verse;
-  final VoidCallback onAnimationComplete;
-
-  const _FlashingListTile({
-    required this.verse,
-    required this.onAnimationComplete,
-  });
-
-  @override
-  State<_FlashingListTile> createState() => _FlashingListTileState();
-}
-
-class _FlashingListTileState extends State<_FlashingListTile>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<Color?> _colorAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // This sequence animates the color from transparent to the theme's
-    // primary container color and back again, twice.
-    _colorAnimation = TweenSequence<Color?>([
-      TweenSequenceItem(
-        tween: ColorTween(
-          begin: Colors.transparent,
-          end: colorScheme.primaryContainer,
-        ),
-        weight: 1,
-      ),
-      TweenSequenceItem(
-        tween: ColorTween(
-          begin: colorScheme.primaryContainer,
-          end: Colors.transparent,
-        ),
-        weight: 1,
-      ),
-      TweenSequenceItem(
-        tween: ColorTween(
-          begin: Colors.transparent,
-          end: colorScheme.primaryContainer,
-        ),
-        weight: 1,
-      ),
-      TweenSequenceItem(
-        tween: ColorTween(
-          begin: colorScheme.primaryContainer,
-          end: colorScheme.primary.withAlpha(20),
-        ),
-        weight: 1,
-      ),
-    ]).animate(_animationController);
-
-    _animationController.forward().whenComplete(widget.onAnimationComplete);
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    BibleProvider provider = Provider.of<BibleProvider>(context);
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return VerseCard(
-          provider: provider,
-          verse: widget.verse,
-          // verseName: provider.verseIDString(widget.verse, false),
-          color: _colorAnimation.value,
         );
       },
     );

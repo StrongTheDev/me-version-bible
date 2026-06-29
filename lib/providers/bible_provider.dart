@@ -123,6 +123,9 @@ class BibleProvider extends ChangeNotifier {
     );
     String joinedVerses = versesToText.join("\n");
     String finalContent = "$header$joinedVerses";
+    finalContent = finalContent
+        .replaceAll(RegExp(r'<F[Ii]>'), "")
+        .replaceAll("--", '—');
     // debugPrint(finalContent);
     Clipboard.setData(ClipboardData(text: finalContent));
 
@@ -260,6 +263,7 @@ class BibleProvider extends ChangeNotifier {
 
     return "$compressedBookName${verse['chapter']}:${verse['verse']}";
   }
+
   Future<void> _filterData() async {
     // Filter books
     bookIdFilters.clear();
