@@ -71,60 +71,54 @@ List<TextSpan> convertText(
   String italicsOpenTag = "<FI>",
   String italicsCloseTag = "<Fi>",
 }) {
-  TextStyle normalTextStyle = TextStyle(
+  text = text.replaceAll("--", '—');
+  
+  final normalStyle = TextStyle(
     color: colorScheme.secondary,
-    fontWeight: .normal,
+    fontWeight: FontWeight.normal,
     letterSpacing: 0,
   );
-  text = text.replaceAll("--", '—');
-  List<TextSpan> result = List.of([TextSpan(text: "   ")], growable: true);
-  int lastOpenIndex = text.indexOf(italicsOpenTag);
-  int lastCloseIndex = 0;
-  int count = 0;
-  while (lastOpenIndex != -1) {
-    if (0 == count++) {
-      result.add(
-        TextSpan(
-          text: text.substring(0, lastOpenIndex),
-          style: normalTextStyle,
-        ),
-      );
+  
+  final italicStyle = TextStyle(
+    color: colorScheme.onPrimaryContainer,
+    fontWeight: FontWeight.bold,
+    fontStyle: FontStyle.italic,
+    fontFamily: "Merriweather",
+    letterSpacing: 0,
+  );
+
+  final result = <TextSpan>[TextSpan(text: "   ", style: normalStyle)];
+  
+  int searchStart = 0;
+  while (true) {
+    final openIdx = text.indexOf(italicsOpenTag, searchStart);
+    if (openIdx == -1) break;
+    
+    final closeIdx = text.indexOf(italicsCloseTag, openIdx + italicsOpenTag.length);
+    if (closeIdx == -1) break;
+    
+    // Add text before the opening tag
+    if (openIdx > searchStart) {
+      result.add(TextSpan(text: text.substring(searchStart, openIdx), style: normalStyle));
     }
-    lastCloseIndex = text.indexOf(italicsCloseTag, lastOpenIndex);
-    result.add(
-      TextSpan(
-        text: "${text.substring(
-          lastOpenIndex + italicsOpenTag.length,
-          lastCloseIndex,
-        )} ",
-        style: TextStyle(
-          color: colorScheme.secondaryFixed,
-          fontWeight: .bold,
-          fontStyle: .italic,
-          fontFamily: "Merriweather",
-          letterSpacing: 0,
-        )
-      ),
-    );
-    lastOpenIndex = text.indexOf(italicsOpenTag, lastCloseIndex);
-    if (lastOpenIndex != -1) {
-      result.add(
-        TextSpan(
-          text: text.substring(lastCloseIndex + italicsCloseTag.length, lastOpenIndex),
-          style: normalTextStyle,
-        ),
-      );
+    
+    String italicText = text.substring(openIdx + italicsOpenTag.length, closeIdx);
+    
+    // Add space after if next char is alphanumeric (better visibility)
+    final nextCharIndex = closeIdx + italicsCloseTag.length;
+    if (nextCharIndex < text.length && RegExp(r'[a-zA-Z0-9]').hasMatch(text[nextCharIndex])) {
+      italicText += ' ';
     }
+    
+    result.add(TextSpan(text: italicText, style: italicStyle));
+    
+    searchStart = closeIdx + italicsCloseTag.length;
   }
-  if (count == 0) {
-    result.add(TextSpan(text: text, style: normalTextStyle));
-  } else {
-    result.add(
-      TextSpan(
-        text: text.substring(lastCloseIndex + italicsCloseTag.length),
-        style: normalTextStyle,
-      ),
-    );
+  
+  // Add remaining text after last closing tag, or all text if no tags found
+  if (searchStart < text.length) {
+    result.add(TextSpan(text: text.substring(searchStart), style: normalStyle));
   }
+  
   return result;
 }

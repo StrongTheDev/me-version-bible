@@ -272,7 +272,7 @@ class _HomeState extends State<Home> {
                       searchController: _searchController,
                       barHintText: "Search for verses...",
                       viewHintText: "Use <book1,...,bookn> to filter books",
-                      barElevation: WidgetStatePropertyAll(0),
+                      barElevation: .all(2),
                       suggestionsBuilder: (context, controller) async {
                         _searchQuery = controller.text;
                         if (_searchQuery == null ||
@@ -594,12 +594,11 @@ class _HomeState extends State<Home> {
                     ),
                     // Chapters
                     Expanded(
-                      child: SizedBox(
-                        height: .infinity,
+                      child: SingleChildScrollView (
+                        physics: BouncingScrollPhysics(),
                         child: Wrap(
                           spacing: pad,
                           runSpacing: pad,
-
                           children: List.generate(provider.chapters.length, (
                             index,
                           ) {
