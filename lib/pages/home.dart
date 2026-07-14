@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:me_version_bible/components/custom_drawer.dart';
-import 'package:me_version_bible/components/custom_list_tile.dart';
 import 'package:me_version_bible/components/sidebar/side_bar.dart';
 import 'package:me_version_bible/components/verse_card.dart';
 import 'package:me_version_bible/models/selection.dart';
 import 'package:me_version_bible/pages/settings_page.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
+import 'package:me_version_bible/providers/home_provider.dart';
 import 'package:me_version_bible/utils/functions.dart';
 import 'package:provider/provider.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -114,7 +115,8 @@ class _HomeState extends State<Home> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final SearchController _searchController = SearchController();
   // scrollers
-  final ScrollController _scrollBook = ScrollController();
+  final ItemScrollController _scrollBook = ItemScrollController();
+  // final ItemPositionsListener _bookPositionsListener = ItemPositionsListener.create();
   final ScrollController _scrollVerse = ScrollController();
 
   Iterable<Widget> _lastResults = <Widget>[];
@@ -125,15 +127,13 @@ class _HomeState extends State<Home> {
   int? _verseToAnimate;
   int? _bookIdToAnimate;
   int? _chapterToAnimate;
-  double bookAndChapterItemHeight = 43;
-
-  static const maxWidth = 250.0;
-  double sidebarWidth = maxWidth;
+  double bookAndChapterItemHeight = 56;
 
   @override
   Widget build(BuildContext context) {
     double pad = 8;
     var provider = Provider.of<BibleProvider>(context);
+    var homeProvider = Provider.of<HomeProvider>(context);
     void chooseVerse(Selection selection, int verseNumber) async {
       await provider.selectBook(selection.bookIndex);
       await provider.selectChapter(selection.chapterIndex);
@@ -158,13 +158,11 @@ class _HomeState extends State<Home> {
           curve: Curves.easeInOut,
         );
       }
-      if (_scrollBook.hasClients) {
-        _scrollBook.animateTo(
-          selection.bookIndex * bookAndChapterItemHeight,
-          duration: Durations.long1,
-          curve: Curves.easeInOut,
-        );
-      }
+      _scrollBook.scrollTo(
+        index: selection.bookIndex,
+        duration: Durations.long1,
+        curve: Curves.easeInOut,
+      );
       if (!mounted) return;
 
       // Trigger the animation
@@ -187,6 +185,17 @@ class _HomeState extends State<Home> {
           ),
         )
         .toList();
+
+    void scrollToSelectedBook() {
+      var bookIdx = provider.setting.selection.bookIndex;
+      _scrollBook.scrollTo(
+        index: bookIdx,
+        duration: Durations.medium4,
+        curve: Curves.easeOutCubic,
+        alignment: 0.1,
+      );
+    }
+
     return Builder(
       builder: (context) {
         if (!provider.biblesExist) {
@@ -218,11 +227,7 @@ class _HomeState extends State<Home> {
                   onPressed: () {
                     // _scaffoldKey.currentState?.openDrawer();
                     setState(() {
-                      if (sidebarWidth < maxWidth) {
-                        sidebarWidth = maxWidth;
-                      } else {
-                        sidebarWidth = 0;
-                      }
+                      homeProvider.toggleSidebar();
                     });
                   },
                 ),
@@ -384,10 +389,13 @@ class _HomeState extends State<Home> {
                   children: [
                     // Side Bar
                     SideBar(
-                      width: sidebarWidth,
+                      width: homeProvider.sidebarisOpen
+                          ? homeProvider.sidebarWidth
+                          : 0,
                       selectedBookIndex: provider.setting.selection.bookIndex,
+                      bookPickerScrollController: _scrollBook,
                     ),
-                    if (sidebarWidth > 0) SizedBox(width: 8),
+                    if (homeProvider.sidebarisOpen) SizedBox(width: 8),
 
                     // Reading View
                     Expanded(
@@ -439,29 +447,14 @@ class _HomeState extends State<Home> {
                                     style: ButtonStyle(
                                       padding: .all(.symmetric(horizontal: 16)),
                                     ),
-                                    onPressed: () async {
-                                      buildBookAndChapterDialog(
-                                        context,
-                                        pad,
-                                        provider,
-                                      );
-
-                                      await Future.delayed(Durations.short2);
-                                      if (!mounted) return;
-
-                                      // Ensure the scroll controllers are attached
-                                      if (!_scrollBook.hasClients) {
-                                        // If not attached, wait for the next frame
-                                        if (!mounted) return;
+                                    onPressed: () {
+                                      if (!homeProvider.sidebarisOpen) {
+                                        homeProvider.toggleSidebar();
                                       }
 
-                                      // Now animate
-                                      _scrollBook.jumpTo(
-                                        provider.setting.selection.bookIndex *
-                                            bookAndChapterItemHeight,
-                                      );
+                                      scrollToSelectedBook();
 
-                                      if (!mounted) return;
+                                      // if (!mounted) return;
 
                                       // Trigger the animation only if books list is not empty
                                       if (provider.books.isNotEmpty) {
@@ -567,7 +560,7 @@ class _HomeState extends State<Home> {
                                   width: 200,
                                   child: ElevatedButton(
                                     // label: Text("Previous Chapter"),
-                                    onPressed: () {},
+                                    onPressed: () => provider.navPreviousChapter(),
                                     child: Icon(Icons.arrow_back_ios),
                                     // iconAlignment: .start,
                                   ),
@@ -576,7 +569,7 @@ class _HomeState extends State<Home> {
                                   width: 200,
                                   child: ElevatedButton(
                                     // label: Text("Next Chapter"),
-                                    onPressed: () {},
+                                    onPressed: () => provider.navNextChapter(),
                                     child: Icon(Icons.arrow_forward_ios),
                                     // iconAlignment: .end,
                                   ),
@@ -596,128 +589,4 @@ class _HomeState extends State<Home> {
       },
     );
   }
-
-  Future<dynamic> buildBookAndChapterDialog(
-    BuildContext context,
-    double pad,
-    BibleProvider provider,
-  ) {
-    if (provider.books.isEmpty) {
-      return showDialog(
-        context: context,
-        builder: (ctx) => const AlertDialog(
-          title: Text('Loading...'),
-          content: CircularProgressIndicator(),
-        ),
-      );
-    }
-    return showDialog(
-      context: context,
-      builder: (ctx) {
-        return SizedBox(
-          width: MediaQuery.of(ctx).size.width,
-          height: MediaQuery.of(ctx).size.height,
-          child: Padding(
-            padding: const EdgeInsets.all(64.0),
-            child: Card(
-              child: Padding(
-                padding: EdgeInsets.all(pad),
-                child: Row(
-                  spacing: pad,
-                  children: [
-                    //Books
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            width: 250,
-                            child: ListView.builder(
-                              controller: _scrollBook,
-                              shrinkWrap: true,
-                              itemCount: provider.books.length,
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: .only(bottom: pad / 2),
-                                  child: CustomListTile(
-                                    text: provider.books[index]['name'],
-                                    style: TextStyle(
-                                      fontWeight: .bold,
-                                      fontSize: 16,
-                                    ),
-                                    selected:
-                                        provider.setting.selection.bookIndex ==
-                                        index,
-                                    borderRadius: 16,
-                                    padding: .symmetric(
-                                      vertical: pad,
-                                      horizontal: pad,
-                                    ),
-                                    onTap: () {
-                                      provider.selectBook(index);
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Chapters
-                    Expanded(
-                      child: SingleChildScrollView(
-                        physics: BouncingScrollPhysics(),
-                        child: Wrap(
-                          spacing: pad,
-                          runSpacing: pad,
-                          children: List.generate(provider.chapters.length, (
-                            index,
-                          ) {
-                            return CustomListTile(
-                              text: provider.chapters
-                                  .elementAt(index)
-                                  .toString(),
-                              selected:
-                                  provider.setting.selection.chapterIndex ==
-                                  index,
-                              width: 48,
-                              height: 48,
-                              borderRadius: 16,
-                              onTap: () {
-                                provider.selectChapter(index);
-                                Navigator.of(ctx).pop();
-                              },
-                            );
-                          }),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
-
-// class LineSeparation extends StatelessWidget {
-//   final bool vertical;
-//   const LineSeparation({super.key, this.vertical = true});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     double dimension = 4;
-//     return Container(
-//       width: vertical ? dimension : double.infinity,
-//       height: vertical ? double.infinity : dimension,
-//       decoration: BoxDecoration(
-//         color: Theme.of(context).colorScheme.secondary,
-//         borderRadius: BorderRadius.circular(dimension / 2),
-//       ),
-//     );
-//   }
-// }

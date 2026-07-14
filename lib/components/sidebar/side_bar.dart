@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:me_version_bible/components/sidebar/pages/bible_plans.dart';
 import 'package:me_version_bible/components/sidebar/pages/book_picker.dart';
+import 'package:me_version_bible/components/sidebar/pages/bookmarked_verses.dart';
+import 'package:me_version_bible/components/sidebar/pages/user_notes.dart';
+import 'package:me_version_bible/components/sidebar/pages/verse_clipboard.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class SideBar extends StatelessWidget {
   final double width;
   final int selectedBookIndex;
+  final ItemScrollController? bookPickerScrollController;
 
   const SideBar({
     super.key,
     required this.width,
     required this.selectedBookIndex,
+    this.bookPickerScrollController,
   });
 
   @override
@@ -19,44 +26,13 @@ class SideBar extends StatelessWidget {
     final pages = [
       {
         "name": "Books",
-        "icon": Icons.book,
-        "content": BookPicker(
-          provider: provider,
-          selectedBookIndex: selectedBookIndex,
-        ),
+        "icon": Icons.import_contacts,
+        "content": BookPicker(books: provider.books, controller: bookPickerScrollController),
       },
-      {
-        "name": "Saved",
-        "icon": Icons.bookmark,
-        "content": BookPicker(
-          provider: provider,
-          selectedBookIndex: selectedBookIndex,
-        ),
-      },
-      {
-        "name": "Notes",
-        "icon": Icons.next_plan,
-        "content": BookPicker(
-          provider: provider,
-          selectedBookIndex: selectedBookIndex,
-        ),
-      },
-      {
-        "name": "Plans",
-        "icon": Icons.calendar_month,
-        "content": BookPicker(
-          provider: provider,
-          selectedBookIndex: selectedBookIndex,
-        ),
-      },
-      {
-        "name": "Clip",
-        "icon": Icons.paste,
-        "content": BookPicker(
-          provider: provider,
-          selectedBookIndex: selectedBookIndex,
-        ),
-      },
+      {"name": "Saved", "icon": Icons.bookmark, "content": BookmarkedVerses()},
+      {"name": "Notes", "icon": Icons.note_alt, "content": UserNotes()},
+      {"name": "Plans", "icon": Icons.calendar_month, "content": BiblePlans()},
+      {"name": "Clip", "icon": Icons.paste, "content": VerseClipboard()},
     ];
     return AnimatedSize(
       duration: Durations.medium1,
@@ -74,7 +50,10 @@ class SideBar extends StatelessWidget {
                         crossAxisAlignment: .center,
                         children: [
                           Icon(page['icon'] as IconData),
-                          Text(page['name'] as String, style: TextStyle(fontSize: 10)),
+                          Text(
+                            page['name'] as String,
+                            style: TextStyle(fontSize: 10),
+                          ),
                         ],
                       ),
                     )

@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:me_version_bible/pages/home.dart';
-import 'package:me_version_bible/pages/manage_versions.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
+import 'package:me_version_bible/providers/home_provider.dart';
 import 'package:me_version_bible/providers/versions_provider.dart';
 import 'package:me_version_bible/utils/constants.dart' show appColors;
 import 'package:provider/provider.dart';
@@ -15,17 +15,16 @@ void main() async {
   }
 
   // await initFiles();
-  var bibleProvider = BibleProvider();
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (context) => HomeProvider(context)),
+        ChangeNotifierProvider(create: (context) => BibleProvider()),
         ChangeNotifierProvider(
           create: (context) {
-            return bibleProvider;
+            var b = Provider.of<BibleProvider>(context);
+            BibleVersionsProvider(b);
           },
-        ),
-        ChangeNotifierProvider(
-          create: (context) => BibleVersionsProvider(bibleProvider),
         ),
       ],
       child: MyApp(),
@@ -55,7 +54,6 @@ class MyApp extends StatelessWidget {
         fontFamily: "Merriweather",
       ),
       debugShowCheckedModeBanner: false,
-      routes: {'/manage_versions': (context) => ManageVersions()},
     );
   }
 }

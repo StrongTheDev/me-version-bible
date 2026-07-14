@@ -31,16 +31,20 @@ class BibleProvider extends ChangeNotifier {
   Selection _lastSelection = Selection.at(-1, -1);
   String _lastTranslation = '';
   List<Map<String, dynamic>> _verses = [];
-  List<Map<String, dynamic>> _bookStatistics = [];
-  List<Map<String, dynamic>> get bookStatistics => _bookStatistics;
+  final Map<String, Map<String, dynamic>> _bookStatistics = {};
   List<Map<String, dynamic>> _versesCache = [];
   // selecting verses
   final List<int> _selectedVerseIDs = [];
+  List<GlobalKey> _bookItemKeys = [];
+  
   BibleProvider() {
     initFiles();
   }
   Set<Bible> get bibles => _bibles;
 
+  List<GlobalKey> get bookItemKeys => _bookItemKeys;
+
+  Map<String, Map<String, dynamic>> get bookStatistics => _bookStatistics;
   bool get hasVersesSelected => _selectedVerseIDs.isNotEmpty;
 
   Setting get setting => _setting;
@@ -105,6 +109,53 @@ class BibleProvider extends ChangeNotifier {
     if (currentBible == null) return;
     await _getData();
     await _filterData();
+    _loadChaptersAndSetIndexBounds();
+    notifyListeners();
+    _saveSettings();
+  }
+
+  Future<void> navNextChapter() async {
+    clearSelectedVerses();
+    int chapterIndex = _setting.selection.chapterIndex;
+    int bookIndex = _setting.selection.bookIndex;
+  
+    if (chapterIndex + 1 < chapters.length) {
+      // still within the current book
+      _setting.selection.chapterIndex = chapterIndex + 1;
+    } else if (bookIndex + 1 < books.length) {
+      // overflow into next book, chapter 1
+      _setting.selection.bookIndex = bookIndex + 1;
+      _setting.selection.chapterIndex = 0;
+    } else {
+      // already at the very last chapter of the very last book
+      return;
+    }
+  
+    _loadChaptersAndSetIndexBounds();
+    notifyListeners();
+    _saveSettings();
+  }
+
+  Future<void> navPreviousChapter() async {
+    clearSelectedVerses();
+    int chapterIndex = _setting.selection.chapterIndex;
+    int bookIndex = _setting.selection.bookIndex;
+  
+    if (chapterIndex - 1 >= 0) {
+      // still within the current book
+      _setting.selection.chapterIndex = chapterIndex - 1;
+    } else if (bookIndex - 1 >= 0) {
+      // underflow into previous book, its last chapter
+      String prevBookName = books[bookIndex - 1]['name'];
+      int prevChapterCount =
+          (bookStatistics[prevBookName]?['chapter_count'] as int?) ?? 1;
+      _setting.selection.bookIndex = bookIndex - 1;
+      _setting.selection.chapterIndex = prevChapterCount - 1;
+    } else {
+      // already at chapter 1 of the very first book
+      return;
+    }
+  
     _loadChaptersAndSetIndexBounds();
     notifyListeners();
     _saveSettings();
@@ -256,8 +307,13 @@ class BibleProvider extends ChangeNotifier {
     notifyListeners();
     _saveSettings();
   }
-  // represent a verse uniquely
 
+  void updateBookItemKeys(int len) {
+    _bookItemKeys.clear();
+    _bookItemKeys = List.generate(len, (i) => GlobalKey(debugLabel: "book_$i"));
+  }
+
+  /// represent a verse uniquely
   String verseIDString(Map<String, dynamic> verse, [bool showBookName = true]) {
     String compressedBookName = !showBookName
         ? ""
@@ -289,6 +345,7 @@ class BibleProvider extends ChangeNotifier {
     books.addAll(await getBooks(currentBible!));
     _verses.addAll(await getVerses(currentBible!));
     _bookStatistics.addAll(await getBookStatistics(currentBible!));
+    updateBookItemKeys(books.length);
   }
 
   void _loadChaptersAndSetIndexBounds() {
@@ -312,7 +369,7 @@ class BibleProvider extends ChangeNotifier {
   void _saveSettings() async {
     await saveSetting(setting);
   }
-
+  
   List<Map<String, dynamic>> _v() {
     var currT = currentBible!.translation;
     if (_lastSelection == setting.selection &&
