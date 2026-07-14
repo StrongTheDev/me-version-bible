@@ -56,6 +56,7 @@ class VerseCard extends StatelessWidget {
               fontSize: 16,
               fontFamily: "Merriweather",
               letterSpacing: 0.5,
+              fontFeatures: [.oldstyleFigures()],
             ),
             children: convertText(verse['text'], colorScheme),
           ),
@@ -77,6 +78,7 @@ List<TextSpan> convertText(
     color: colorScheme.secondary,
     fontWeight: FontWeight.normal,
     letterSpacing: 0,
+    fontSize: 16,
   );
   
   final italicStyle = TextStyle(
@@ -85,6 +87,7 @@ List<TextSpan> convertText(
     fontStyle: FontStyle.italic,
     fontFamily: "Merriweather",
     letterSpacing: 0,
+    fontSize: 16,
   );
 
   final result = <TextSpan>[TextSpan(text: "   ", style: normalStyle)];

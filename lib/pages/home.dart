@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:me_version_bible/components/custom_drawer.dart';
 import 'package:me_version_bible/components/custom_list_tile.dart';
+import 'package:me_version_bible/components/sidebar/side_bar.dart';
 import 'package:me_version_bible/components/verse_card.dart';
 import 'package:me_version_bible/models/selection.dart';
+import 'package:me_version_bible/pages/settings_page.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:me_version_bible/utils/functions.dart';
 import 'package:provider/provider.dart';
@@ -18,10 +20,12 @@ class Home extends StatefulWidget {
 class _FlashingListTile extends StatefulWidget {
   final Map<String, dynamic> verse;
   final VoidCallback onAnimationComplete;
+  final String? verseName;
 
   const _FlashingListTile({
     required this.verse,
     required this.onAnimationComplete,
+    this.verseName,
   });
 
   @override
@@ -42,7 +46,7 @@ class _FlashingListTileState extends State<_FlashingListTile>
         return VerseCard(
           provider: provider,
           verse: widget.verse,
-          // verseName: provider.verseIDString(widget.verse, false),
+          verseName: widget.verseName,
           color: _colorAnimation.value,
         );
       },
@@ -123,6 +127,9 @@ class _HomeState extends State<Home> {
   int? _chapterToAnimate;
   double bookAndChapterItemHeight = 43;
 
+  static const maxWidth = 250.0;
+  double sidebarWidth = maxWidth;
+
   @override
   Widget build(BuildContext context) {
     double pad = 8;
@@ -146,17 +153,17 @@ class _HomeState extends State<Home> {
       // would be more reliable.
       if (_scrollVerse.hasClients) {
         _scrollVerse.animateTo(
-        verseIndex * 56.0, // Approximate height of a ListTile
-        duration: Durations.long1,
-        curve: Curves.easeInOut,
-      );
+          verseIndex * 56.0, // Approximate height of a ListTile
+          duration: Durations.long1,
+          curve: Curves.easeInOut,
+        );
       }
       if (_scrollBook.hasClients) {
         _scrollBook.animateTo(
-        selection.bookIndex * bookAndChapterItemHeight,
-        duration: Durations.long1,
-        curve: Curves.easeInOut,
-      );
+          selection.bookIndex * bookAndChapterItemHeight,
+          duration: Durations.long1,
+          curve: Curves.easeInOut,
+        );
       }
       if (!mounted) return;
 
@@ -209,7 +216,14 @@ class _HomeState extends State<Home> {
                 IconButton(
                   icon: Icon(Icons.menu),
                   onPressed: () {
-                    _scaffoldKey.currentState?.openDrawer();
+                    // _scaffoldKey.currentState?.openDrawer();
+                    setState(() {
+                      if (sidebarWidth < maxWidth) {
+                        sidebarWidth = maxWidth;
+                      } else {
+                        sidebarWidth = 0;
+                      }
+                    });
                   },
                 ),
               ],
@@ -224,6 +238,18 @@ class _HomeState extends State<Home> {
                       ? Icons.dark_mode
                       : Icons.light_mode,
                 ),
+              ),
+              SizedBox(width: pad * 2),
+              IconButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) {
+                      return SettingsPage();
+                    },
+                  );
+                },
+                icon: Icon(Icons.settings),
               ),
               SizedBox(width: pad * 2),
             ],
@@ -330,7 +356,9 @@ class _HomeState extends State<Home> {
           drawer: CustomDrawer(),
           body: Consumer<BibleProvider>(
             builder: (context, provider, child) {
-              if (!provider.biblesExist || provider.books.isEmpty || provider.chapters.isEmpty) {
+              if (!provider.biblesExist ||
+                  provider.books.isEmpty ||
+                  provider.chapters.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisSize: .min,
@@ -350,166 +378,210 @@ class _HomeState extends State<Home> {
                 provider.setting.selection.chapterIndex,
               );
               return Padding(
-                padding: const EdgeInsets.all(16) - .only(top: 16),
-                child: Column(
+                padding: const EdgeInsets.all(16) - .only(top: 16, bottom: 8),
+                child: Row(
                   mainAxisSize: .max,
-                  spacing: 4,
                   children: [
-                    SizedBox(
-                      // height: 32,
-                      child: Row(
-                        children: [
-                          SizedBox(width: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withAlpha(20),
-                              borderRadius: .circular(16),
-                            ),
-                            child: DropdownButton(
-                              items: bibles,
-                              value: provider.currentBible,
-                              focusColor: Colors.transparent,
-                              underline: SizedBox(),
-                              borderRadius: .circular(16),
-                              alignment: .center,
-                              onChanged: (value) {
-                                provider.selectBible(value!);
-                              },
-                              isDense: true,
-                              padding: .only(left: 16),
-                            ),
-                          ),
-                          SizedBox(width: 4),
-                          Container(
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withAlpha(20),
-                              borderRadius: .circular(16),
-                            ),
-                            child: TextButton.icon(
-                              icon: Icon(Icons.book_rounded, size: 14),
-                              label: Text(
-                                "${currentBook['name']}, chapter $chapterNumber",
-                                style: TextStyle(fontSize: 14),
-                              ),
-                              style: ButtonStyle(
-                                padding: .all(.symmetric(horizontal: 16)),
-                              ),
-                              onPressed: () async {
-                                buildBookAndChapterDialog(
-                                  context,
-                                  pad,
-                                  provider,
-                                );
-
-                                await Future.delayed(Durations.short2);
-                                if (!mounted) return;
-
-                                // Ensure the scroll controllers are attached
-                                if (!_scrollBook.hasClients) {
-                                  // If not attached, wait for the next frame
-                                  if (!mounted) return;
-                                }
-
-                                // Now animate
-                                _scrollBook.jumpTo(
-                                  provider.setting.selection.bookIndex *
-                                      bookAndChapterItemHeight,
-                                );
-
-                                if (!mounted) return;
-
-                                // Trigger the animation only if books list is not empty
-                                if (provider.books.isNotEmpty) {
-                                  setState(() {
-                                    _bookIdToAnimate =
-                                        provider.books[provider
-                                            .setting
-                                            .selection
-                                            .bookIndex]['id'];
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                    // Side Bar
+                    SideBar(
+                      width: sidebarWidth,
+                      selectedBookIndex: provider.setting.selection.bookIndex,
                     ),
-                    Expanded(
-                      child: Row(
-                        // spacing: 4,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          // Verses
-                          Expanded(
-                            flex: 9,
-                            child: FutureBuilder(
-                              future: Future.sync(
-                                () => provider.verses.isEmpty,
-                              ),
-                              builder: (context, snap) {
-                                if (!snap.hasData || snap.data!) {
-                                  return Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                }
+                    if (sidebarWidth > 0) SizedBox(width: 8),
 
-                                return ListView.builder(
-                                  controller: _scrollVerse,
-                                  shrinkWrap: true,
-                                  itemBuilder: (context, index) {
-                                    final verse = provider.verses[index];
-                                    final currentBookId =
-                                        provider.books[provider
-                                            .setting
-                                            .selection
-                                            .bookIndex]['id'];
-                                    final currentChapter = provider.chapters
-                                        .elementAt(
-                                          provider
+                    // Reading View
+                    Expanded(
+                      child: Column(
+                        // mainAxisSize: .max,
+                        spacing: 4,
+                        children: [
+                          SizedBox(
+                            // height: 32,
+                            child: Row(
+                              children: [
+                                SizedBox(width: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary.withAlpha(20),
+                                    borderRadius: .circular(16),
+                                  ),
+                                  child: DropdownButton(
+                                    items: bibles,
+                                    value: provider.currentBible,
+                                    focusColor: Colors.transparent,
+                                    underline: SizedBox(),
+                                    borderRadius: .circular(16),
+                                    alignment: .center,
+                                    onChanged: (value) {
+                                      provider.selectBible(value!);
+                                    },
+                                    isDense: true,
+                                    padding: .only(left: 16),
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Container(
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary.withAlpha(20),
+                                    borderRadius: .circular(16),
+                                  ),
+                                  child: TextButton.icon(
+                                    icon: Icon(Icons.book_rounded, size: 14),
+                                    label: Text(
+                                      "${currentBook['name']}, chapter $chapterNumber",
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                    style: ButtonStyle(
+                                      padding: .all(.symmetric(horizontal: 16)),
+                                    ),
+                                    onPressed: () async {
+                                      buildBookAndChapterDialog(
+                                        context,
+                                        pad,
+                                        provider,
+                                      );
+
+                                      await Future.delayed(Durations.short2);
+                                      if (!mounted) return;
+
+                                      // Ensure the scroll controllers are attached
+                                      if (!_scrollBook.hasClients) {
+                                        // If not attached, wait for the next frame
+                                        if (!mounted) return;
+                                      }
+
+                                      // Now animate
+                                      _scrollBook.jumpTo(
+                                        provider.setting.selection.bookIndex *
+                                            bookAndChapterItemHeight,
+                                      );
+
+                                      if (!mounted) return;
+
+                                      // Trigger the animation only if books list is not empty
+                                      if (provider.books.isNotEmpty) {
+                                        setState(() {
+                                          _bookIdToAnimate =
+                                              provider.books[provider
+                                                  .setting
+                                                  .selection
+                                                  .bookIndex]['id'];
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              // spacing: 4,
+                              // mainAxisAlignment: MainAxisAlignment.start,
+                              physics: BouncingScrollPhysics(),
+                              // children: [
+                              // Verses
+                              child: FutureBuilder(
+                                future: Future.sync(
+                                  () => provider.verses.isEmpty,
+                                ),
+                                builder: (context, snap) {
+                                  if (!snap.hasData || snap.data!) {
+                                    return Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  }
+
+                                  return ListView.builder(
+                                    controller: _scrollVerse,
+                                    shrinkWrap: true,
+                                    itemBuilder: (context, index) {
+                                      final verse = provider.verses[index];
+                                      final currentBookId =
+                                          provider.books[provider
                                               .setting
                                               .selection
-                                              .chapterIndex,
+                                              .bookIndex]['id'];
+                                      final currentChapter = provider.chapters
+                                          .elementAt(
+                                            provider
+                                                .setting
+                                                .selection
+                                                .chapterIndex,
+                                          );
+
+                                      final bool isTargetVerse =
+                                          verse['verse'] == _verseToAnimate &&
+                                          currentBookId == _bookIdToAnimate &&
+                                          currentChapter == _chapterToAnimate;
+
+                                      if (isTargetVerse) {
+                                        return _FlashingListTile(
+                                          verseName: verse['verse'].toString(),
+                                          verse: verse,
+                                          onAnimationComplete: () {
+                                            if (mounted) {
+                                              setState(
+                                                () => _verseToAnimate = null,
+                                              );
+                                            }
+                                          },
                                         );
-
-                                    final bool isTargetVerse =
-                                        verse['verse'] == _verseToAnimate &&
-                                        currentBookId == _bookIdToAnimate &&
-                                        currentChapter == _chapterToAnimate;
-
-                                    if (isTargetVerse) {
-                                      return _FlashingListTile(
-                                        verse: verse,
-                                        onAnimationComplete: () {
-                                          if (mounted) {
-                                            setState(
-                                              () => _verseToAnimate = null,
-                                            );
-                                          }
-                                        },
-                                      );
-                                    } else {
-                                      return VerseCard(
-                                        provider: provider,
-                                        verse: verse,
-                                        opacity: 20,
-                                        selected: provider.isVerseSelected(
-                                          verse['id'],
-                                        ),
-                                        onSelect: () => provider
-                                            .selectOrDeselectVerse(verse['id']),
-                                        onRightClick: () =>
-                                            provider.quickCopyVerses(context),
-                                      );
-                                    }
-                                  },
-                                  itemCount: provider.verses.length,
-                                );
-                              },
+                                      } else {
+                                        return VerseCard(
+                                          provider: provider,
+                                          verse: verse,
+                                          verseName: verse['verse'].toString(),
+                                          opacity: 20,
+                                          selected: provider.isVerseSelected(
+                                            verse['id'],
+                                          ),
+                                          onSelect: () =>
+                                              provider.selectOrDeselectVerse(
+                                                verse['id'],
+                                              ),
+                                          onRightClick: () =>
+                                              provider.quickCopyVerses(context),
+                                        );
+                                      }
+                                    },
+                                    itemCount: provider.verses.length,
+                                  );
+                                },
+                              ),
+                              // ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 32,
+                            child: Row(
+                              mainAxisAlignment: .center,
+                              spacing: 8,
+                              children: [
+                                SizedBox(
+                                  width: 200,
+                                  child: ElevatedButton(
+                                    // label: Text("Previous Chapter"),
+                                    onPressed: () {},
+                                    child: Icon(Icons.arrow_back_ios),
+                                    // iconAlignment: .start,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 200,
+                                  child: ElevatedButton(
+                                    // label: Text("Next Chapter"),
+                                    onPressed: () {},
+                                    child: Icon(Icons.arrow_forward_ios),
+                                    // iconAlignment: .end,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -594,7 +666,7 @@ class _HomeState extends State<Home> {
                     ),
                     // Chapters
                     Expanded(
-                      child: SingleChildScrollView (
+                      child: SingleChildScrollView(
                         physics: BouncingScrollPhysics(),
                         child: Wrap(
                           spacing: pad,

@@ -74,6 +74,16 @@ Future<List<Map<String, dynamic>>> getVerses(Bible bible) async {
   return await database!.query(bible.verses);
 }
 
+Future<List<Map<String, dynamic>>> getBookStatistics(
+  Bible bible,
+) async {
+  String q =
+      """SELECT v.book_id, b.name as book_name, max(chapter) as chapter_count, count(*) as verse_count
+      FROM ${bible.verses} v INNER JOIN ${bible.books} b 
+      on v.book_id = b.id GROUP by b.id, b.name ORDER by b.id""";
+  return database!.rawQuery(q);
+}
+
 /// Initializes the settings database.
 /// Creates the DB file and table if they don't exist.
 Future<void> initSettingsDatabase() async {

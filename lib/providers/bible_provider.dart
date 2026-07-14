@@ -31,6 +31,8 @@ class BibleProvider extends ChangeNotifier {
   Selection _lastSelection = Selection.at(-1, -1);
   String _lastTranslation = '';
   List<Map<String, dynamic>> _verses = [];
+  List<Map<String, dynamic>> _bookStatistics = [];
+  List<Map<String, dynamic>> get bookStatistics => _bookStatistics;
   List<Map<String, dynamic>> _versesCache = [];
   // selecting verses
   final List<int> _selectedVerseIDs = [];
@@ -283,8 +285,10 @@ class BibleProvider extends ChangeNotifier {
     // get books and verses
     books.clear();
     _verses.clear();
+    _bookStatistics.clear();
     books.addAll(await getBooks(currentBible!));
     _verses.addAll(await getVerses(currentBible!));
+    _bookStatistics.addAll(await getBookStatistics(currentBible!));
   }
 
   void _loadChaptersAndSetIndexBounds() {
