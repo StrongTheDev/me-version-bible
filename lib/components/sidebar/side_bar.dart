@@ -12,12 +12,14 @@ class SideBar extends StatelessWidget {
   final double width;
   final int selectedBookIndex;
   final ItemScrollController? bookPickerScrollController;
+  final ItemPositionsListener? bookPickerPositionsListener;
 
   const SideBar({
     super.key,
     required this.width,
     required this.selectedBookIndex,
     this.bookPickerScrollController,
+    this.bookPickerPositionsListener
   });
 
   @override
@@ -27,7 +29,11 @@ class SideBar extends StatelessWidget {
       {
         "name": "Books",
         "icon": Icons.import_contacts,
-        "content": BookPicker(books: provider.books, controller: bookPickerScrollController),
+        "content": BookPicker(
+          books: provider.books,
+          controller: bookPickerScrollController,
+          positionsListener: bookPickerPositionsListener,
+        ),
       },
       {"name": "Saved", "icon": Icons.bookmark, "content": BookmarkedVerses()},
       {"name": "Notes", "icon": Icons.note_alt, "content": UserNotes()},
@@ -60,6 +66,7 @@ class SideBar extends StatelessWidget {
                     .toList(),
                 isScrollable: true,
                 indicatorAnimation: .elastic,
+                tabAlignment: .start,
                 physics: BouncingScrollPhysics(),
               ),
               SizedBox(height: 8),

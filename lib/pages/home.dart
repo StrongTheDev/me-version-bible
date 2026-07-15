@@ -116,7 +116,7 @@ class _HomeState extends State<Home> {
   final SearchController _searchController = SearchController();
   // scrollers
   final ItemScrollController _scrollBook = ItemScrollController();
-  // final ItemPositionsListener _bookPositionsListener = ItemPositionsListener.create();
+  final ItemPositionsListener _bookPositionsListener = ItemPositionsListener.create();
   final ScrollController _scrollVerse = ScrollController();
 
   Iterable<Widget> _lastResults = <Widget>[];
@@ -394,6 +394,7 @@ class _HomeState extends State<Home> {
                           : 0,
                       selectedBookIndex: provider.setting.selection.bookIndex,
                       bookPickerScrollController: _scrollBook,
+                      bookPickerPositionsListener: _bookPositionsListener,
                     ),
                     if (homeProvider.sidebarisOpen) SizedBox(width: 8),
 

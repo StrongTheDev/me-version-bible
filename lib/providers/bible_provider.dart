@@ -35,14 +35,11 @@ class BibleProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _versesCache = [];
   // selecting verses
   final List<int> _selectedVerseIDs = [];
-  List<GlobalKey> _bookItemKeys = [];
   
   BibleProvider() {
     initFiles();
   }
   Set<Bible> get bibles => _bibles;
-
-  List<GlobalKey> get bookItemKeys => _bookItemKeys;
 
   Map<String, Map<String, dynamic>> get bookStatistics => _bookStatistics;
   bool get hasVersesSelected => _selectedVerseIDs.isNotEmpty;
@@ -308,11 +305,6 @@ class BibleProvider extends ChangeNotifier {
     _saveSettings();
   }
 
-  void updateBookItemKeys(int len) {
-    _bookItemKeys.clear();
-    _bookItemKeys = List.generate(len, (i) => GlobalKey(debugLabel: "book_$i"));
-  }
-
   /// represent a verse uniquely
   String verseIDString(Map<String, dynamic> verse, [bool showBookName = true]) {
     String compressedBookName = !showBookName
@@ -345,7 +337,6 @@ class BibleProvider extends ChangeNotifier {
     books.addAll(await getBooks(currentBible!));
     _verses.addAll(await getVerses(currentBible!));
     _bookStatistics.addAll(await getBookStatistics(currentBible!));
-    updateBookItemKeys(books.length);
   }
 
   void _loadChaptersAndSetIndexBounds() {

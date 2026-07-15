@@ -4,15 +4,25 @@ import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-Column titleColumn(String title) {
+Widget titleColumn(String title, Color bgColor) {
   return Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [Text(title, style: TextStyle(fontSize: 12))],
+      Padding(
+        padding: const .symmetric(horizontal: 24),
+        child: Container(
+          padding: .all(8),
+          decoration: BoxDecoration(
+            color: bgColor.withAlpha(120),
+            borderRadius: .circular(8),
+          ),
+          child: Row(
+            mainAxisAlignment: .center,
+            children: [Text(title, style: TextStyle(fontSize: 12))],
+          ),
+        ),
       ),
-      SizedBox(height: 8),
+      const SizedBox(height: 8),
     ],
   );
 }
@@ -39,26 +49,10 @@ class BookListItem extends StatelessWidget {
 
     return Column(
       children: [
-        if (bookNameLower == "matthew")
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Divider(
-                height: 4,
-                thickness: 4,
-                indent: 16,
-                endIndent: 16,
-                radius: BorderRadius.circular(8),
-                color: colorScheme.secondaryContainer,
-              ),
-              SizedBox(height: 8),
-            ],
-          ),
-
         if (idx == 0)
-          titleColumn("OLD TESTAMENT")
+          titleColumn("OLD TESTAMENT", colorScheme.tertiaryContainer)
         else if (bookNameLower == "matthew")
-          titleColumn("NEW TESTAMENT"),
+          titleColumn("NEW TESTAMENT", colorScheme.tertiaryContainer),
 
         // Only this rebuilds when selection changes
         Selector<BibleProvider, int?>(
@@ -126,16 +120,21 @@ class BookPicker extends StatelessWidget {
   final ItemScrollController? controller;
   final ItemPositionsListener? positionsListener;
 
-  const BookPicker({super.key, required this.books, this.controller, this.positionsListener});
+  const BookPicker({
+    super.key,
+    required this.books,
+    this.controller,
+    this.positionsListener,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Selector<BibleProvider, (Map<String, Map<String, dynamic>>, )>(
-      selector: (_, p) => (p.bookStatistics, ),
+    return Selector<BibleProvider, (Map<String, Map<String, dynamic>>,)>(
+      selector: (_, p) => (p.bookStatistics,),
       builder: (context, data, _) {
-        final (chCount, ) = data;
+        final (chCount,) = data;
         final provider = context.read<BibleProvider>();
-  
+
         return ScrollablePositionedList.builder(
           itemCount: books.length,
           physics: const BouncingScrollPhysics(),
