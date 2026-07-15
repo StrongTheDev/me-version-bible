@@ -137,7 +137,7 @@ class BookPicker extends StatelessWidget {
 
         return ScrollablePositionedList.builder(
           itemCount: books.length,
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           itemScrollController: controller,
           itemPositionsListener: positionsListener,
           itemBuilder: (ctx, idx) {
@@ -146,7 +146,16 @@ class BookPicker extends StatelessWidget {
               idx: idx,
               book: book,
               chapterCount: chCount[book['name']]?['chapter_count'],
-              onTap: () => provider.selectBook(idx),
+              onTap: () async {
+                provider.selectBook(idx);
+                await Future.delayed(Durations.short1);
+                controller?.scrollTo(
+                  index: idx,
+                  duration: Durations.medium1,
+                  alignment: 0.1,
+                  curve: Curves.easeOut
+                );
+              },
             );
           },
         );
