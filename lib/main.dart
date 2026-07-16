@@ -20,11 +20,12 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (context) => HomeProvider(context)),
         ChangeNotifierProvider(create: (context) => BibleProvider()),
-        ChangeNotifierProvider(
-          create: (context) {
-            var b = Provider.of<BibleProvider>(context);
-            BibleVersionsProvider(b);
-          },
+        ChangeNotifierProxyProvider<BibleProvider, BibleVersionsProvider>(
+          create: (context) => BibleVersionsProvider(
+            Provider.of<BibleProvider>(context, listen: false),
+          ),
+          update: (context, bibleProvider, previousVersionsProvider) =>
+              previousVersionsProvider ?? BibleVersionsProvider(bibleProvider),
         ),
       ],
       child: MyApp(),

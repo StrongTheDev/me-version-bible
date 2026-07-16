@@ -128,6 +128,8 @@ class _HomeState extends State<Home> {
   int? _bookIdToAnimate;
   int? _chapterToAnimate;
 
+  bool _hasScrolledInitially = false;
+
   @override
   Widget build(BuildContext context) {
     double pad = 8;
@@ -138,7 +140,7 @@ class _HomeState extends State<Home> {
       await provider.selectChapter(selection.chapterIndex);
 
       // Wait for the next frame for the provider to update the verse list
-      await WidgetsFlutterBinding.ensureInitialized().endOfFrame;
+      await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
 
       final verseIndex = provider.verses.indexWhere(
@@ -147,14 +149,13 @@ class _HomeState extends State<Home> {
       if (verseIndex == -1) return;
 
       // Await next frame so the scroll calculations are correct.
-      await WidgetsFlutterBinding.ensureInitialized().endOfFrame;
+      await WidgetsBinding.instance.endOfFrame;
       // Scroll to the verse.
       _scrollVerse.scrollTo(
         index: verseIndex,
         duration: Durations.long4,
         curve: Curves.easeOut,
       );
-      
       _scrollBook.scrollTo(
         index: selection.bookIndex,
         duration: Durations.long4,
@@ -185,6 +186,7 @@ class _HomeState extends State<Home> {
         .toList();
 
     void scrollToSelectedBook() {
+      if (!_scrollBook.isAttached) return;
       var bookIdx = provider.setting.selection.bookIndex;
       _scrollBook.scrollTo(
         index: bookIdx,
@@ -379,6 +381,7 @@ class _HomeState extends State<Home> {
               var chapterNumber = provider.chapters.elementAt(
                 provider.setting.selection.chapterIndex,
               );
+              _maybeScrollToSelectedBook(provider);
               return Padding(
                 padding: const EdgeInsets.all(16) - .only(top: 16, bottom: 8),
                 child: Row(
@@ -468,9 +471,9 @@ class _HomeState extends State<Home> {
                                     child: CircularProgressIndicator(),
                                   );
                                 }
-                            
+
                                 return ScrollablePositionedList.builder(
-                            physics: BouncingScrollPhysics(),
+                                  physics: BouncingScrollPhysics(),
                                   itemScrollController: _scrollVerse,
                                   itemBuilder: (context, index) {
                                     final verse = provider.verses[index];
@@ -486,12 +489,12 @@ class _HomeState extends State<Home> {
                                               .selection
                                               .chapterIndex,
                                         );
-                            
+
                                     final bool isTargetVerse =
                                         verse['verse'] == _verseToAnimate &&
                                         currentBookId == _bookIdToAnimate &&
                                         currentChapter == _chapterToAnimate;
-                            
+
                                     if (isTargetVerse) {
                                       return _FlashingListTile(
                                         verseName: verse['verse'].toString(),
@@ -511,10 +514,8 @@ class _HomeState extends State<Home> {
                                         selected: provider.isVerseSelected(
                                           verse['id'],
                                         ),
-                                        onSelect: () =>
-                                            provider.selectOrDeselectVerse(
-                                              verse['id'],
-                                            ),
+                                        onSelect: () => provider
+                                            .selectOrDeselectVerse(verse['id']),
                                         onRightClick: () =>
                                             provider.quickCopyVerses(context),
                                       );
@@ -564,5 +565,23 @@ class _HomeState extends State<Home> {
         );
       },
     );
+  }
+
+  void _maybeScrollToSelectedBook(BibleProvider provider) {
+    if (provider.books.isEmpty) return; // not loaded yet, nothing to scroll to
+    if (_hasScrolledInitially) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_scrollBook.isAttached) return;
+
+      _scrollBook.scrollTo(
+        index: provider.setting.selection.bookIndex,
+        duration: Durations.medium4,
+        curve: Curves.easeOutCubic,
+        alignment: 0.1,
+      );
+      _hasScrolledInitially = true;
+    });
   }
 }

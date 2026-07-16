@@ -36,7 +36,7 @@ class _BibleCardState extends State<BibleCard> {
           border: BoxBorder.all(width: 1, color: scheme.secondaryContainer),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const .symmetric(horizontal: 16, vertical: 8),
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
