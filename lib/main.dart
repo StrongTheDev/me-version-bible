@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: "Merriweather",
       ),
-      debugShowCheckedModeBanner: false,
+      // debugShowCheckedModeBanner: false,
     );
   }
 }

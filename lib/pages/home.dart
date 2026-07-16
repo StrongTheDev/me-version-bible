@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:me_version_bible/components/custom_drawer.dart';
 import 'package:me_version_bible/components/sidebar/side_bar.dart';
 import 'package:me_version_bible/components/verse_card.dart';
 import 'package:me_version_bible/models/selection.dart';
@@ -116,8 +115,9 @@ class _HomeState extends State<Home> {
   final SearchController _searchController = SearchController();
   // scrollers
   final ItemScrollController _scrollBook = ItemScrollController();
-  final ItemPositionsListener _bookPositionsListener = ItemPositionsListener.create();
-  final ScrollController _scrollVerse = ScrollController();
+  final ItemPositionsListener _bookPositionsListener =
+      ItemPositionsListener.create();
+  final ItemScrollController _scrollVerse = ItemScrollController();
 
   Iterable<Widget> _lastResults = <Widget>[];
   String? _searchQuery;
@@ -127,7 +127,6 @@ class _HomeState extends State<Home> {
   int? _verseToAnimate;
   int? _bookIdToAnimate;
   int? _chapterToAnimate;
-  double bookAndChapterItemHeight = 56;
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +138,7 @@ class _HomeState extends State<Home> {
       await provider.selectChapter(selection.chapterIndex);
 
       // Wait for the next frame for the provider to update the verse list
-      await Future.delayed(Duration.zero);
+      await WidgetsFlutterBinding.ensureInitialized().endOfFrame;
       if (!mounted) return;
 
       final verseIndex = provider.verses.indexWhere(
@@ -147,21 +146,20 @@ class _HomeState extends State<Home> {
       );
       if (verseIndex == -1) return;
 
+      // Await next frame so the scroll calculations are correct.
+      await WidgetsFlutterBinding.ensureInitialized().endOfFrame;
       // Scroll to the verse.
-      // NOTE: This assumes a fixed height for each verse's ListTile.
-      // For more complex layouts, a package like `scrollable_positioned_list`
-      // would be more reliable.
-      if (_scrollVerse.hasClients) {
-        _scrollVerse.animateTo(
-          verseIndex * 56.0, // Approximate height of a ListTile
-          duration: Durations.long1,
-          curve: Curves.easeInOut,
-        );
-      }
+      _scrollVerse.scrollTo(
+        index: verseIndex,
+        duration: Durations.long4,
+        curve: Curves.easeOut,
+      );
+      
       _scrollBook.scrollTo(
         index: selection.bookIndex,
-        duration: Durations.long1,
-        curve: Curves.easeInOut,
+        duration: Durations.long4,
+        curve: Curves.easeOut,
+        alignment: 0.1,
       );
       if (!mounted) return;
 
@@ -358,7 +356,6 @@ class _HomeState extends State<Home> {
               ),
             ),
           ),
-          drawer: CustomDrawer(),
           body: Consumer<BibleProvider>(
             builder: (context, provider, child) {
               if (!provider.biblesExist ||
@@ -454,19 +451,6 @@ class _HomeState extends State<Home> {
                                       }
 
                                       scrollToSelectedBook();
-
-                                      // if (!mounted) return;
-
-                                      // Trigger the animation only if books list is not empty
-                                      if (provider.books.isNotEmpty) {
-                                        setState(() {
-                                          _bookIdToAnimate =
-                                              provider.books[provider
-                                                  .setting
-                                                  .selection
-                                                  .bookIndex]['id'];
-                                        });
-                                      }
                                     },
                                   ),
                                 ),
@@ -474,81 +458,71 @@ class _HomeState extends State<Home> {
                             ),
                           ),
                           Expanded(
-                            child: SingleChildScrollView(
-                              // spacing: 4,
-                              // mainAxisAlignment: MainAxisAlignment.start,
-                              physics: BouncingScrollPhysics(),
-                              // children: [
-                              // Verses
-                              child: FutureBuilder(
-                                future: Future.sync(
-                                  () => provider.verses.isEmpty,
-                                ),
-                                builder: (context, snap) {
-                                  if (!snap.hasData || snap.data!) {
-                                    return Center(
-                                      child: CircularProgressIndicator(),
-                                    );
-                                  }
-
-                                  return ListView.builder(
-                                    controller: _scrollVerse,
-                                    shrinkWrap: true,
-                                    itemBuilder: (context, index) {
-                                      final verse = provider.verses[index];
-                                      final currentBookId =
-                                          provider.books[provider
+                            child: FutureBuilder(
+                              future: Future.sync(
+                                () => provider.verses.isEmpty,
+                              ),
+                              builder: (context, snap) {
+                                if (!snap.hasData || snap.data!) {
+                                  return Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                }
+                            
+                                return ScrollablePositionedList.builder(
+                            physics: BouncingScrollPhysics(),
+                                  itemScrollController: _scrollVerse,
+                                  itemBuilder: (context, index) {
+                                    final verse = provider.verses[index];
+                                    final currentBookId =
+                                        provider.books[provider
+                                            .setting
+                                            .selection
+                                            .bookIndex]['id'];
+                                    final currentChapter = provider.chapters
+                                        .elementAt(
+                                          provider
                                               .setting
                                               .selection
-                                              .bookIndex]['id'];
-                                      final currentChapter = provider.chapters
-                                          .elementAt(
-                                            provider
-                                                .setting
-                                                .selection
-                                                .chapterIndex,
+                                              .chapterIndex,
+                                        );
+                            
+                                    final bool isTargetVerse =
+                                        verse['verse'] == _verseToAnimate &&
+                                        currentBookId == _bookIdToAnimate &&
+                                        currentChapter == _chapterToAnimate;
+                            
+                                    if (isTargetVerse) {
+                                      return _FlashingListTile(
+                                        verseName: verse['verse'].toString(),
+                                        verse: verse,
+                                        onAnimationComplete: () {
+                                          setState(
+                                            () => _verseToAnimate = null,
                                           );
-
-                                      final bool isTargetVerse =
-                                          verse['verse'] == _verseToAnimate &&
-                                          currentBookId == _bookIdToAnimate &&
-                                          currentChapter == _chapterToAnimate;
-
-                                      if (isTargetVerse) {
-                                        return _FlashingListTile(
-                                          verseName: verse['verse'].toString(),
-                                          verse: verse,
-                                          onAnimationComplete: () {
-                                            if (mounted) {
-                                              setState(
-                                                () => _verseToAnimate = null,
-                                              );
-                                            }
-                                          },
-                                        );
-                                      } else {
-                                        return VerseCard(
-                                          provider: provider,
-                                          verse: verse,
-                                          verseName: verse['verse'].toString(),
-                                          opacity: 20,
-                                          selected: provider.isVerseSelected(
-                                            verse['id'],
-                                          ),
-                                          onSelect: () =>
-                                              provider.selectOrDeselectVerse(
-                                                verse['id'],
-                                              ),
-                                          onRightClick: () =>
-                                              provider.quickCopyVerses(context),
-                                        );
-                                      }
-                                    },
-                                    itemCount: provider.verses.length,
-                                  );
-                                },
-                              ),
-                              // ],
+                                        },
+                                      );
+                                    } else {
+                                      return VerseCard(
+                                        provider: provider,
+                                        verse: verse,
+                                        verseName: verse['verse'].toString(),
+                                        opacity: 20,
+                                        selected: provider.isVerseSelected(
+                                          verse['id'],
+                                        ),
+                                        onSelect: () =>
+                                            provider.selectOrDeselectVerse(
+                                              verse['id'],
+                                            ),
+                                        onRightClick: () =>
+                                            provider.quickCopyVerses(context),
+                                      );
+                                    }
+                                  },
+                                  itemCount: provider.verses.length,
+                                );
+                              },
                             ),
                           ),
                           SizedBox(
@@ -561,7 +535,8 @@ class _HomeState extends State<Home> {
                                   width: 200,
                                   child: ElevatedButton(
                                     // label: Text("Previous Chapter"),
-                                    onPressed: () => provider.navPreviousChapter(),
+                                    onPressed: () =>
+                                        provider.navPreviousChapter(),
                                     child: Icon(Icons.arrow_back_ios),
                                     // iconAlignment: .start,
                                   ),
