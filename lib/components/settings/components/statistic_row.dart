@@ -20,14 +20,12 @@ class StatisticRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       spacing: 4,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .center,
       children: [
         Icon(icon, color: Theme.of(context).colorScheme.primary),
         Text('$label: ', style: TextStyle(fontWeight: FontWeight.bold)),
-        Expanded(
-          child: Text(value, style: TextStyle(fontStyle: FontStyle.italic)),
-        ),
-        trailing ?? SizedBox(),
+        Text(value, style: TextStyle(fontStyle: FontStyle.italic)),
+        Expanded(child: trailing ?? SizedBox()),
       ],
     );
   }

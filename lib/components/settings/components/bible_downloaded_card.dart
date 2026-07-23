@@ -1,7 +1,7 @@
 // ignore_for_file: must_be_immutable
 
 import 'package:flutter/material.dart';
-import 'package:me_version_bible/components/statistic_row.dart';
+import 'package:me_version_bible/components/settings/components/statistic_row.dart';
 import 'package:me_version_bible/models/bible.dart';
 import 'package:me_version_bible/providers/bible_provider.dart';
 import 'package:me_version_bible/utils/functions.dart';
@@ -121,6 +121,14 @@ class _BibleCardState extends State<BibleCard> {
                       icon: Icons.tag_rounded,
                       label: 'Number of chapters',
                       value: widget.stats['chapters'].toString(),
+                      trailing: widget.stats['empty_verses'] > 0 ? Text(
+                        "    ${widget.stats['empty_verses']} empty verses, ${widget.stats['empty_chapters']} completely empty chapters",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: .bold,
+                          fontSize: 10,
+                        ),
+                      ): null,
                     ),
                     StatisticRow(
                       icon: Icons.folder_open_rounded,

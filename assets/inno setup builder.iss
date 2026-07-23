@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Me Version Bible"
-#define MyAppVersion "1.0.4"
+#define MyAppVersion "1.1.0-rc1"
 #define MyAppPublisher "Agani Daniel Strong"
 #define MyAppExeName "MeVersionBible.exe"
 #define ProjectDir "..\"
@@ -31,7 +31,7 @@ LicenseFile={#ProjectDir}\LICENSE
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir={#ProjectDir}\build\setup compiler
-OutputBaseFilename=me-version-bible
+OutputBaseFilename=me-version-bible-v{#MyAppVersion}
 SetupIconFile={#ProjectDir}\windows\runner\resources\app_icon.ico
 SolidCompression=yes
 WizardStyle=modern

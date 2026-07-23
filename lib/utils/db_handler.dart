@@ -33,6 +33,7 @@ String buildWhereClause(String column, List<String> patterns) {
 }
 
 Future<List<Map<String, dynamic>>> getAvailableBooks(Bible bible) {
+  // var q = "select distinct book_id from ${bible.verses} group by name order by book_id";
   return database!.query(
     bible.verses,
     distinct: true,
@@ -43,7 +44,9 @@ Future<List<Map<String, dynamic>>> getAvailableBooks(Bible bible) {
 }
 
 Future<List<Map<String, dynamic>>> getBooks(Bible bible) async {
-  return await database!.query(bible.books);
+  return await database!.rawQuery(
+    "select * from ${bible.books} group by name order by id",
+  );
 }
 
 Future<Map<String, dynamic>> getDBStats(Bible bible) async {
@@ -52,14 +55,32 @@ Future<Map<String, dynamic>> getDBStats(Bible bible) async {
   try {
     var query = await db.query("translations");
     if (query.isNotEmpty) result.addAll(query.first);
-    int books = (await db.query(bible.books)).length;
+    int books = (await db.rawQuery(
+      "select * from ${bible.books} group by name order by id",
+    )).length;
     int chapters = (await db.query(
       bible.verses,
       distinct: true,
-      columns: ['chapter'],
+      columns: ['book_id', 'chapter'],
+    )).length;
+    var emptyChapterSQL = """
+    SELECT v.book_id, v.chapter
+    FROM ${bible.verses} v
+    GROUP BY v.book_id, v.chapter
+    HAVING SUM(CASE WHEN v.text != '' THEN 1 ELSE 0 END) = 0
+    ORDER BY v.book_id, v.chapter""";
+    int emptyChapters = (await db.rawQuery(emptyChapterSQL)).length;
+    int emptyVerses = (await db.rawQuery(
+      "select * from ${bible.verses} where text = ''",
     )).length;
     int size = File(bible.path).lengthSync();
-    result.addAll({"books": books, "chapters": chapters, "size": size});
+    result.addAll({
+      "books": books,
+      "chapters": chapters,
+      "empty_chapters": emptyChapters,
+      "empty_verses": emptyVerses,
+      "size": size,
+    });
     // debugPrint(result.toString());
   } catch (e, stack) {
     debugPrint("Error in getDBStats: $e\n$stack");

@@ -1,7 +1,7 @@
 // ignore_for_file: must_be_immutable
 
 import 'package:flutter/material.dart';
-import 'package:me_version_bible/components/statistic_row.dart';
+import 'package:me_version_bible/components/settings/components/statistic_row.dart';
 import 'package:me_version_bible/models/bible_downloadable.dart';
 import 'package:me_version_bible/providers/versions_provider.dart';
 import 'package:me_version_bible/utils/functions.dart' show fromBytes;
